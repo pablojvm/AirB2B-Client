@@ -1,0 +1,9 @@
+@media (max-width: 375px) {
+    #logo{
+        display: none;
+    }
+    #navbar {
+        display: flex;
+        justify-content: center;
+    }
+}
