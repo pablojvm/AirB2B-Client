@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { Card, Button, Modal, Form, FloatingLabel } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/auth.context';
+import service from '../services/service.config';
 
 function ModalLogin({ show, handleClose }) {
     const navigate = useNavigate();
@@ -10,7 +11,6 @@ function ModalLogin({ show, handleClose }) {
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [number, setNumber] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [buttonSignup, setButtonSignup] = useState("login");
@@ -18,7 +18,6 @@ function ModalLogin({ show, handleClose }) {
 
   const handleUsernameChange = (e) => setUsername(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
-  const handleNumberChange = (e) => setNumber(e.target.value);
   const handleEmailChange = (e) => setEmail(e.target.value);
 
   const handleLogin = async (e) => {
@@ -53,7 +52,6 @@ function ModalLogin({ show, handleClose }) {
       const newUser = {
         email,
         username,
-        number,
         password,
       };
       const response = await service.post(`/auth/signup`, newUser);
@@ -149,18 +147,6 @@ function ModalLogin({ show, handleClose }) {
                   placeholder="Email"
                   value={email}
                   onChange={handleEmailChange}
-                />
-              </FloatingLabel>
-              <FloatingLabel
-                controlId="floatingNumber"
-                label="Number"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="number"
-                  placeholder="Number"
-                  value={number}
-                  onChange={handleNumberChange}
                 />
               </FloatingLabel>
               <FloatingLabel

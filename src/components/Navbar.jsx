@@ -1,6 +1,13 @@
 import Navbar from "react-bootstrap/Navbar";
 import Image from "react-bootstrap/Image";
-import { InputGroup, Button, Form, Container, NavDropdown, DropdownButton,} from "react-bootstrap";
+import {
+  InputGroup,
+  Button,
+  Form,
+  Container,
+  NavDropdown,
+  DropdownButton,
+} from "react-bootstrap";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import { useContext } from "react";
@@ -23,11 +30,13 @@ function NavBar() {
 
   const [showSignupModal, setShowSignupModal] = useState(false);
   const toggleSignupModal = () => setShowSignupModal(!showSignupModal);
-  
+
   return (
     <Navbar expand="lg" className="bg-body-tertiary" id="navbar">
       <Container id="logo">
-        <Image src="logoair.png" width="100px" />
+        <Link to="/">
+          <Image src="logoair.png" width="100px" />
+        </Link>
       </Container>
       <Container>
         <></>
@@ -70,10 +79,10 @@ function NavBar() {
           )}
 
           <NavDropdown.Item as={Link} to="/own-ads" eventKey="4.2">
-            Mis Anuncios
+            Mis Alojamientos
           </NavDropdown.Item>
-          <NavDropdown.Item as={Link} to={`/own-reviews`} eventKey="4.3">
-            Mis Comentarios
+          <NavDropdown.Item as={Link} to={`/favoriteshousing`} eventKey="4.3">
+            Mis Favoritos
           </NavDropdown.Item>
           {isLoggedIn && (
             <>
@@ -86,7 +95,10 @@ function NavBar() {
         </DropdownButton>
       </Container>
       {/* Pass actual boolean and a close function that sets it false */}
-      <ModalLogin show={showSignupModal} handleClose={() => setShowSignupModal(false)} />
+      <ModalLogin
+        show={showSignupModal}
+        handleClose={() => setShowSignupModal(false)}
+      />
     </Navbar>
   );
 }
