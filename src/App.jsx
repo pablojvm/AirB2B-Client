@@ -29,7 +29,7 @@ function App() {
             </>
           }
         />
-        <Route path="/housingdetails" element={<HousingDetailsPage />} />
+        <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
         <Route path="/favoriteshousing" element={<FavoritesHousingPage />} />
         <Route path="/500" element={<Page500/>}/>
       </Routes>

@@ -32,12 +32,9 @@ function ModalLogin({ show, handleClose }) {
       const response = await service.post(`/auth/login`, userCredentials)
       localStorage.setItem("authToken", response.data.authToken);
       await authenticateUser();
-      navigate("/own-ads");
-      // optionally close modal after login:
-      handleClose && handleClose();
     } catch (error) {
       console.log(error);
-      if (error.response && error.response.status === 400) {
+      if (error.response.status === 400) {
         setErrorMessage(error.response.data.errorMessage);
       } else {
         setErrorMessage("Algo salió mal. Inténtalo de nuevo.");

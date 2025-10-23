@@ -1,5 +1,5 @@
-import axios from "axios";
 import { createContext, useEffect, useState } from "react";
+import service from "../services/service.config";
 
 const AuthContext = createContext();
 
@@ -11,15 +11,15 @@ function AuthWrapper(props) {
   const authenticateUser = async () => {
     const authToken = localStorage.getItem("authToken");
 
+    if (!authToken) {
+      setIsLoggedIn(false);
+      setLoggedUserId(null);
+      setIsValidatingToken(false);
+      return;
+    }
+
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_SERVER_URL}/api/auth/verify`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
+      const response = await service.get("/auth/verify");
 
       setIsLoggedIn(true);
       setLoggedUserId(response.data.payload._id);
@@ -45,9 +45,8 @@ function AuthWrapper(props) {
     return (
       <div>
         <h3>...validando usuario</h3>
-        <img src="loading.gif"/>
+        <img src="/loading.gif" alt="loading"/>
       </div>
-      // hacer esta animacion muy bien hecha!!! muy importante
     );
   }
 
