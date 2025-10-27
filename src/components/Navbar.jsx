@@ -1,22 +1,16 @@
-import Navbar from "react-bootstrap/Navbar";
-import Image from "react-bootstrap/Image";
-import {
-  InputGroup,
-  Button,
-  Form,
-  Container,
-  NavDropdown,
-  DropdownButton,
-} from "react-bootstrap";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Navbar, Container, Image, InputGroup, Button, Form, DropdownButton, NavDropdown } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
-import { useContext } from "react";
-import { useState } from "react";
 import ModalLogin from "./ModalLogin";
+import ModalLoginDone from "./ModalLoginDone";
 
 function NavBar() {
   const navigate = useNavigate();
   const { isLoggedIn, authenticateUser } = useContext(AuthContext);
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleLogout = async () => {
     localStorage.removeItem("authToken");
@@ -28,9 +22,6 @@ function NavBar() {
     }
   };
 
-  const [showSignupModal, setShowSignupModal] = useState(false);
-  const toggleSignupModal = () => setShowSignupModal(!showSignupModal);
-
   return (
     <Navbar expand="lg" className="bg-body-tertiary" id="navbar">
       <Container id="logo">
@@ -38,66 +29,43 @@ function NavBar() {
           <Image src="logoair.png" width="100px" />
         </Link>
       </Container>
-      <Container>
-        <></>
-        <>
-          <InputGroup className="mb-3">
-            <Form.Control
-              placeholder="Introducir destino"
-              aria-label="Recipient's username"
-              aria-describedby="basic-addon2"
-              style={{ borderRadius: "20px" }}
-            />
-            <Button
-              variant="outline-secondary"
-              id="button-addon2"
-              style={{ borderRadius: "20px" }}
-            >
-              <img src="lupa.png" width={"20px"} />
-            </Button>
-          </InputGroup>
-        </>
-      </Container>
-      <Container style={{ display: "flex", justifyContent: "flex-end" }}>
-        <h4 as={Link} to="">
-          Hazte anfitrion
-        </h4>
-        <DropdownButton
-          id="dropdown-basic-button"
-          title="Config"
-          src="config.png"
-          variant="secondary"
-        >
-          {isLoggedIn ? (
-            <NavDropdown.Item as={Link} to="/user-profile" eventKey="4.1">
-              Perfil
-            </NavDropdown.Item>
-          ) : (
-            <NavDropdown.Item onClick={toggleSignupModal} eventKey="4.1">
-              Entrar o Registrarme
-            </NavDropdown.Item>
-          )}
 
-          <NavDropdown.Item as={Link} to="/own-ads" eventKey="4.2">
-            Mis Alojamientos
-          </NavDropdown.Item>
-          <NavDropdown.Item as={Link} to={`/favoriteshousing`} eventKey="4.3">
-            Mis Favoritos
-          </NavDropdown.Item>
-          {isLoggedIn && (
+      <Container>
+        <InputGroup className="mb-3">
+          <Form.Control placeholder="Introducir destino" style={{ borderRadius: "20px" }} />
+          <Button variant="outline-secondary" style={{ borderRadius: "20px" }}>
+            <img src="lupa.png" width="20px" />
+          </Button>
+        </InputGroup>
+      </Container>
+
+      <Container style={{ display: "flex", justifyContent: "flex-end" }}>
+        <h4>Hazte anfitrion</h4>
+        <DropdownButton id="dropdown-basic-button" title="Config" variant="secondary">
+          {isLoggedIn ? (
             <>
+              <NavDropdown.Item as={Link} to="/own-ads">Mis Alojamientos</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/favoriteshousing">Mis Favoritos</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/user-profile">Perfil</NavDropdown.Item>
               <NavDropdown.Divider />
-              <NavDropdown.Item eventKey="4.4" onClick={handleLogout}>
-                Cerrar Sesión
-              </NavDropdown.Item>
+              <NavDropdown.Item onClick={handleLogout}>Cerrar Sesión</NavDropdown.Item>
             </>
+          ) : (
+            <NavDropdown.Item onClick={() => setShowLoginModal(true)}>Entrar o Registrarme</NavDropdown.Item>
           )}
         </DropdownButton>
       </Container>
-      {/* Pass actual boolean and a close function that sets it false */}
       <ModalLogin
-        show={showSignupModal}
-        handleClose={() => setShowSignupModal(false)}
+        show={showLoginModal}
+        handleClose={() => setShowLoginModal(false)}
+        onSignupSuccess={() => {
+          setShowLoginModal(false);
+          setShowSuccessModal(true);
+        }}
+      />
+      <ModalLoginDone
+        show={showSuccessModal}
+        handleClose={() => setShowSuccessModal(false)}
       />
     </Navbar>
   );

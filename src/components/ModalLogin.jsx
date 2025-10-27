@@ -1,12 +1,12 @@
-import { useState, useContext } from 'react';
-import { Card, Button, Modal, Form, FloatingLabel } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/auth.context';
-import service from '../services/service.config';
+import { useState, useContext } from "react";
+import { Card, Button, Modal, Form, FloatingLabel } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/auth.context";
+import service from "../services/service.config";
+import ModalLoginDone from "./ModalLoginDone";
 
 function ModalLogin({ show, handleClose }) {
-    const navigate = useNavigate();
-
+  const navigate = useNavigate();
   const { authenticateUser } = useContext(AuthContext);
 
   const [username, setUsername] = useState("");
@@ -14,165 +14,151 @@ function ModalLogin({ show, handleClose }) {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [buttonSignup, setButtonSignup] = useState("login");
-  // NOTE: show and handleClose are now controlled by parent props
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleUsernameChange = (e) => setUsername(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
   const handleEmailChange = (e) => setEmail(e.target.value);
 
+  const resetForm = () => {
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setErrorMessage(null);
+  };
+
+  const handleCloseAndReset = () => {
+    resetForm();
+    handleClose();
+  };
+
+  const toggleSignup = () => {
+    setButtonSignup((prev) => (prev === "login" ? "signup" : "login"));
+    setErrorMessage(null);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    const userCredentials = {
-      username,
-      password,
-    };
-
     try {
-      const response = await service.post(`/auth/login`, userCredentials)
-      localStorage.setItem("authToken", response.data.authToken);
+      const res = await service.post("/auth/login", { username, password });
+      localStorage.setItem("authToken", res.data.authToken);
       await authenticateUser();
-    } catch (error) {
-      console.log(error);
-      if (error.response.status === 400) {
-        setErrorMessage(error.response.data.errorMessage);
-      } else {
-        setErrorMessage("Algo salió mal. Inténtalo de nuevo.");
-      }
+      resetForm();
+      handleClose();
+      navigate("/");
+    } catch (err) {
+      setErrorMessage(err.response?.data.errorMessage || "Algo salió mal");
     }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-
     try {
-      const newUser = {
-        email,
-        username,
-        password,
-      };
-      const response = await service.post(`/auth/signup`, newUser);
-      // switch view to login after signup (internal toggle)
-      toggleSignup();
-      // cerrar modal — el padre controla el estado, usamos handleClose prop
-      handleClose && handleClose();
-    } catch (error) {
-      console.log(error);
-      if (error.response && error.response.status === 400) {
-        setErrorMessage(error.response.data.errorMessage);
-      } else {
-        setErrorMessage("Algo salió mal. Inténtalo de nuevo.");
-      }
-    }
-  };
+      // Creamos usuario
+      await service.post("/auth/signup", { username, email, password });
 
-  const toggleSignup = () => {
-    setButtonSignup((prev) => (prev === "login" ? "signup" : "login"));
+      // Login automático tras signup
+      const loginRes = await service.post("/auth/login", { username, password });
+      localStorage.setItem("authToken", loginRes.data.authToken);
+      await authenticateUser();
+
+      resetForm();
+      handleClose();
+
+      // Mostramos modal de éxito
+      setShowSuccessModal(true);
+    } catch (err) {
+      setErrorMessage(err.response?.data.errorMessage || "Algo salió mal");
+    }
   };
 
   return (
     <>
-      <Modal show={show} onHide={handleClose}>
-        {buttonSignup === "login" && (
-        <Card style={{ width: "18rem" }}>
-          <Card.Title>Inicia Sesión</Card.Title>
-          <Card.Body>
-            <Form onSubmit={handleLogin}>
-              <FloatingLabel
-                controlId="floatingInput"
-                label="Username"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={handleUsernameChange}
-                />
-              </FloatingLabel>
-              <FloatingLabel
-                controlId="floatingPassword"
-                label="Password"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                />
-              </FloatingLabel>
+      {/* Modal principal */}
+      <Modal show={show} onHide={handleCloseAndReset} centered>
+        {buttonSignup === "login" ? (
+          <Card className="p-3 shadow-sm border-0">
+            <Card.Title className="text-center mb-4 fw-bold">Inicia Sesión</Card.Title>
+            <Card.Body>
+              <Form onSubmit={handleLogin}>
+                <FloatingLabel controlId="loginUsername" label="Username" className="mb-3">
+                  <Form.Control
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={handleUsernameChange}
+                    required
+                  />
+                </FloatingLabel>
+                <FloatingLabel controlId="loginPassword" label="Password" className="mb-3">
+                  <Form.Control
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    required
+                  />
+                </FloatingLabel>
 
-              <Button variant="danger" className="w-100 mb-3" type="submit">
-                Accede!
+                {errorMessage && <p className="text-danger text-center">{errorMessage}</p>}
+
+                <Button variant="danger" className="w-100 mb-3" type="submit">Accede!</Button>
+              </Form>
+              <Button variant="secondary" className="w-100" onClick={toggleSignup}>
+                ¿Aún no tienes cuenta?
               </Button>
-            </Form>
-            <Button
-              variant="secondary"
-              className="w-100"
-              onClick={toggleSignup}
-            >
-              Aun no tienes cuenta?
-            </Button>
-          </Card.Body>
-        </Card>
-      )}
-      {buttonSignup === "signup" && (
-        <Card style={{ width: "18rem" }}>
-          <Card.Body>
-            <Card.Title>Regístrate</Card.Title>
-            <Form onSubmit={handleSignup}>
-              <FloatingLabel
-                controlId="floatingInput"
-                label="Username"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={handleUsernameChange}
-                />
-              </FloatingLabel>
-              <FloatingLabel
-                controlId="floatingPassword"
-                label="Email"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={handleEmailChange}
-                />
-              </FloatingLabel>
-              <FloatingLabel
-                controlId="floatingPassword"
-                label="Password"
-                className="mb-3"
-              >
-                <Form.Control
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                />
-              </FloatingLabel>
-              <Button variant="danger" className="w-100 mb-3" type="submit">
-                Crear
+            </Card.Body>
+          </Card>
+        ) : (
+          <Card className="p-3 shadow-sm border-0">
+            <Card.Title className="text-center mb-4 fw-bold">Regístrate</Card.Title>
+            <Card.Body>
+              <Form onSubmit={handleSignup}>
+                <FloatingLabel controlId="signupUsername" label="Username" className="mb-3">
+                  <Form.Control
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={handleUsernameChange}
+                    required
+                  />
+                </FloatingLabel>
+                <FloatingLabel controlId="signupEmail" label="Email" className="mb-3">
+                  <Form.Control
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    required
+                  />
+                </FloatingLabel>
+                <FloatingLabel controlId="signupPassword" label="Password" className="mb-3">
+                  <Form.Control
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={handlePasswordChange}
+                    required
+                  />
+                </FloatingLabel>
+
+                {errorMessage && <p className="text-danger text-center">{errorMessage}</p>}
+
+                <Button variant="danger" className="w-100 mb-3" type="submit">Crear</Button>
+              </Form>
+              <Button variant="secondary" className="w-100" onClick={toggleSignup}>
+                ¿Ya tienes cuenta?
               </Button>
-            </Form>
-            <Button
-              variant="secondary"
-              className="w-100"
-              onClick={toggleSignup}
-            >
-              ¿Ya tienes cuenta?
-            </Button>
-          </Card.Body>
-        </Card>
-      )}
+            </Card.Body>
+          </Card>
+        )}
       </Modal>
+
+      {/* Modal de éxito */}
+      <ModalLoginDone
+        show={showSuccessModal}
+        handleClose={() => setShowSuccessModal(false)}
+      />
     </>
   );
 }

@@ -15,7 +15,7 @@ function App() {
 
   return (
     <>
-      <NavBar></NavBar>
+      <NavBar/>
 
       <Routes>
         <Route
@@ -34,7 +34,7 @@ function App() {
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 
-      <Footer></Footer>
+      <Footer/>
     </>
   );
 }
