@@ -29,6 +29,36 @@ function HousingDetailsPage() {
     }
   };
 
+  const imagesServices = {
+  "Wi-Fi": "/wifi.png",
+  "Air conditioning": "/aire.png",
+  Heating: "/radiador.png",
+  TV: "/tv.png",
+  Washer: "/washer.png",
+  Dryer: "/dryer.png",
+  Kitchen: "/kitchen.png",
+  "Private bathroom": "/bathroom.png",
+  "Hair dryer": "/hairDryer.png",
+  Shampoo: "/shampoo.png",
+  Towels: "/towels.png",
+  Iron: "/iron.png",
+  Parking: "/parking.png",
+  Pool: "/pool.png",
+  Gym: "/gym.png",
+  "Hot tub": "/jacuzzi.png",
+  Balcony: "/balcon.png",
+  Garden: "/jardin.png",
+  "BBQ grill": "/barbacoa.png",
+  Fireplace: "/chimenea.png",
+  "Pet friendly": "/pet.png",
+  "Smoke detector": "/detector.png",
+  "First aid kit": "/botiquin.png",
+  Workspace: "/workspace.png",
+  "Breakfast included": "/desayuno.png",
+  "24h check-in": "/checking.png",
+};
+
+
   //   useEffect(() => {
   //     if (isLoggedIn && params.accommodationId) {
   //       infoFavorites();
@@ -83,8 +113,8 @@ function HousingDetailsPage() {
   if (!acc) return <img src="/animatedviolin.gif" alt="loading" />;
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-around" }}>
+    <div style={{ display: "flex",flexDirection:"column", alignItems: "center" }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h3>{acc.title}</h3>
         <Button
           variant="outline-danger"
@@ -118,7 +148,22 @@ function HousingDetailsPage() {
         <hr/>
         <Image src={acc.owner.photo} width="50px"/>
         <h5>Anfitrión: {acc.owner.username}</h5>
+        <hr/>
       </div>
+      <p>{acc.description}</p>
+      <>
+      <h4>¿Que hay en este alojamiento?</h4>
+      {acc.services.map((eachService) => (
+    <div key={eachService} className="servicio" style={{display:"flex", justifyContent:"center"}}>
+      <img
+        src={imagesServices[eachService]}
+        alt={eachService}
+        style={{ width: "50px", height: "50px" }}
+      />
+      <h5>{eachService}</h5>
+    </div>
+  ))}
+      </>
     </div>
   );
 }

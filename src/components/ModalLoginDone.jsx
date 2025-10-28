@@ -6,6 +6,7 @@ function ModalLoginDone({ show, handleClose }) {
       <Modal.Header closeButton>
         <Modal.Title>¡Registro completado con éxito!</Modal.Title>
       </Modal.Header>
+      <img src="/gif.GIF" width="250px"/>
       <Modal.Body>
         <p>Ya puedes iniciar sesión y empezar a explorar alojamientos, guardarlos como favoritos o publicar los tuyos.</p>
       </Modal.Body>

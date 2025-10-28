@@ -40,7 +40,7 @@ function NavBar() {
       </Container>
 
       <Container style={{ display: "flex", justifyContent: "flex-end" }}>
-        <h4>Hazte anfitrion</h4>
+        <h5>Hazte anfitrion</h5>
         <DropdownButton id="dropdown-basic-button" title="Config" variant="secondary">
           {isLoggedIn ? (
             <>

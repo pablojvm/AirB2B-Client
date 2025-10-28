@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import service from "../services/service.config";
-import { Card, Pagination, Row, Col, Alert, Spinner, Button } from "react-bootstrap";
+import {
+  Card,
+  Pagination,
+  Row,
+  Col,
+  Alert,
+  Spinner,
+  Button,
+} from "react-bootstrap";
 
 function Carousel1() {
   const navigate = useNavigate();
@@ -57,7 +65,10 @@ function Carousel1() {
 
         <Pagination>
           <Pagination.Prev onClick={handlePrev} disabled={startIndex === 0} />
-          <Pagination.Next onClick={handleNext} disabled={startIndex >= maxStart} />
+          <Pagination.Next
+            onClick={handleNext}
+            disabled={startIndex >= maxStart}
+          />
         </Pagination>
       </div>
 
@@ -71,17 +82,31 @@ function Carousel1() {
         <Row>
           {visible.map((eachAcc, idx) => (
             <Col key={eachAcc._id ?? startIndex + idx} xl={2} className="mb-3">
-              <Card style={{ width: "18rem" }}>
+              <Card
+                className="border-0"
+                style={{ width: "18rem", textDecoration:"none" }}
+                as={Link}
+                to={`/housingdetails/${eachAcc._id}`}
+              >
+                <Card.Img
+                  src={eachAcc.photos[0]}
+                  alt="Alojamiento"
+                  style={{
+                    width: "100%",
+                    maxWidth: "350px",
+                    height: "auto",
+                    objectFit: "cover",
+                    border:"2px solid black",
+                    borderRadius:"20px"
+                  }}
+                />
+
                 <Card.Body>
                   <Card.Title>{eachAcc.title}</Card.Title>
                   <Card.Subtitle className="mb-2 text-muted">
                     {eachAcc.cost}€
                   </Card.Subtitle>
                   <Card.Text>{eachAcc.description}</Card.Text>
-                  <Button variant="outline-primary" size="sm" as={Link} to={`/housingdetails/${eachAcc._id}`} >
-                    + Info
-                  </Button>
-                  <Card.Link href="#">Another Link</Card.Link>
                 </Card.Body>
               </Card>
             </Col>

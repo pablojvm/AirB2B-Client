@@ -71,17 +71,32 @@ function Carousel4() {
         <Row>
           {visible.map((eachAcc, idx) => (
             <Col key={eachAcc._id ?? startIndex + idx} xl={2} className="mb-3">
-              <Card style={{ width: "18rem" }}>
+              <Card
+                className="border-0"
+                style={{ width: "18rem", textDecoration:"none"  }}
+                as={Link}
+                to={`/housingdetails/${eachAcc._id}`}
+              >
+                <Card.Img
+                  src={eachAcc.photos[0]}
+                  alt="Alojamiento"
+                  className="border-1 img-fluid rounded-1"
+                  style={{
+                    width: "100%",
+                    maxWidth: "350px",
+                    height: "auto",
+                    objectFit: "cover",
+                    border:"2px solid black",
+                    borderRadius:"20px"
+                  }}
+                />
+
                 <Card.Body>
                   <Card.Title>{eachAcc.title}</Card.Title>
                   <Card.Subtitle className="mb-2 text-muted">
                     {eachAcc.cost}€
                   </Card.Subtitle>
                   <Card.Text>{eachAcc.description}</Card.Text>
-                  <Button variant="outline-primary" size="sm" as={Link} to={`/housingdetails/${eachAcc._id}`} >
-                    + Info
-                  </Button>
-                  <Card.Link href="#">Another Link</Card.Link>
                 </Card.Body>
               </Card>
             </Col>

@@ -45,7 +45,7 @@ function ModalLogin({ show, handleClose }) {
       await authenticateUser();
       resetForm();
       handleClose();
-      navigate("/");
+      setShowSuccessModal(true)
     } catch (err) {
       setErrorMessage(err.response?.data.errorMessage || "Algo salió mal");
     }
