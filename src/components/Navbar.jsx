@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import ModalLogin from "./ModalLogin";
 import ModalLoginDone from "./ModalLoginDone";
+import ModalHost from "./ModalHost";
 
 function NavBar() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function NavBar() {
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showHostModal, setShowHostModal] = useState(false)
 
   const handleLogout = async () => {
     localStorage.removeItem("authToken");
@@ -40,7 +42,7 @@ function NavBar() {
       </Container>
 
       <Container style={{ display: "flex", justifyContent: "flex-end" }}>
-        <h5>Hazte anfitrion</h5>
+        <Button variant="light" onClick={() => setShowHostModal(true)}>Hazte anfitrion</Button>
         <DropdownButton id="dropdown-basic-button" title="Config" variant="secondary">
           {isLoggedIn ? (
             <>
@@ -67,6 +69,8 @@ function NavBar() {
         show={showSuccessModal}
         handleClose={() => setShowSuccessModal(false)}
       />
+
+      <ModalHost show={showHostModal} handleClose={() => setShowHostModal(false)}/>
     </Navbar>
   );
 }

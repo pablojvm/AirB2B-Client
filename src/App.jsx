@@ -10,6 +10,7 @@ import { Route, Routes } from "react-router-dom";
 import HousingDetailsPage from "./pages/HousingDetailsPage";
 import FavoritesHousingPage from "./pages/FavoritesHousingPage";
 import Page500 from "./pages/Page500";
+import NewHousePage from "./pages/NewHousePage";
 
 function App() {
 
@@ -31,6 +32,7 @@ function App() {
         />
         <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
         <Route path="/favoriteshousing" element={<FavoritesHousingPage />} />
+        <Route path="/newHouse" element={<NewHousePage/>}/>
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 
