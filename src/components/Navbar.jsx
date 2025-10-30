@@ -46,9 +46,9 @@ function NavBar() {
         <DropdownButton id="dropdown-basic-button" title="Config" variant="secondary">
           {isLoggedIn ? (
             <>
-              <NavDropdown.Item as={Link} to="/own-ads">Mis Alojamientos</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/myHouses">Mis Alojamientos</NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/favoriteshousing">Mis Favoritos</NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/user-profile">Perfil</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/myProfile">Perfil</NavDropdown.Item>
               <NavDropdown.Divider />
               <NavDropdown.Item onClick={handleLogout}>Cerrar Sesión</NavDropdown.Item>
             </>

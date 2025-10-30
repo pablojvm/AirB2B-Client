@@ -11,6 +11,8 @@ import HousingDetailsPage from "./pages/HousingDetailsPage";
 import FavoritesHousingPage from "./pages/FavoritesHousingPage";
 import Page500 from "./pages/Page500";
 import NewHousePage from "./pages/NewHousePage";
+import YourHouses from "./pages/YourHouses";
+import ProfilePage from "./pages/ProfilPage";
 
 function App() {
 
@@ -33,6 +35,8 @@ function App() {
         <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
         <Route path="/favoriteshousing" element={<FavoritesHousingPage />} />
         <Route path="/newHouse" element={<NewHousePage/>}/>
+        <Route path="/myHouses" element={<YourHouses/>}/>
+        <Route path="myProfile" element={<ProfilePage/>}/>
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 

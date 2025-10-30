@@ -146,7 +146,7 @@ function HousingDetailsPage() {
         <p>{acc.bedrooms} dormitorios · {acc.beds} camas · {acc.bathrooms} baños</p>
         <p>☆{acc.stars}</p>
         <hr/>
-        <Image src={acc.owner.photo} width="50px"/>
+        <Image src={acc.owner.photo || "https://res.cloudinary.com/dinaognbb/image/upload/v1761645190/imagenpre_uq6mvm.webp"} width="50px"/>
         <h5>Anfitrión: {acc.owner.username}</h5>
         <hr/>
       </div>
