@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, Row, Col } from "react-bootstrap";
+import { Card, Row, Col, Container, Button } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import service from "../services/service.config";
 
@@ -22,41 +22,47 @@ function YourHouses() {
   };
 
   return (
-    <div>
+    <Container className="mt-4">
       <h1 className="mb-4">Tus anuncios</h1>
-      <Row>
+
+      <Row className="g-4 justify-content-start">
         {houses.map((eachAcc, idx) => (
-          <Col key={eachAcc._id || idx} xl={2} className="mb-3">
+          <Col key={eachAcc._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
             <Card
-              className="border-0"
-              style={{ width: "18rem", textDecoration: "none" }}
+              className="border-0 shadow-sm h-100"
               as={Link}
               to={`/housingdetails/${eachAcc._id}`}
+              style={{
+                textDecoration: "none",
+                borderRadius: "20px",
+                overflow: "hidden",
+              }}
             >
               <Card.Img
                 src={eachAcc.photos[0]}
                 alt="Alojamiento"
                 style={{
-                  width: "100%",
-                  maxWidth: "350px",
-                  height: "auto",
+                  height: "200px",
                   objectFit: "cover",
-                  border: "2px solid black",
-                  borderRadius: "20px",
                 }}
               />
-              <Card.Body>
+              <Card.Body className="text-center">
                 <Card.Title>{eachAcc.title}</Card.Title>
-                <Card.Subtitle className="mb-2 text-muted">
-                  €{eachAcc.cost}
-                </Card.Subtitle>
-                <Card.Text>{eachAcc.description}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
         ))}
+        {houses.length === 0 && (
+          <div className="text-center mt-4">
+            <Button as={Link} to="/newHouse" variant="outline-dark">
+              <img src="/casa.png" width="100px" alt="Nueva casa" />
+              <p>Publica un anuncio</p>
+            </Button>
+            <h4 className="mt-3">Aún no has publicado tus alojamientos</h4>
+          </div>
+        )}
       </Row>
-    </div>
+    </Container>
   );
 }
 

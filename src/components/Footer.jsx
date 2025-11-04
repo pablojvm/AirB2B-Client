@@ -1,11 +1,19 @@
-
 function Footer() {
   return (
-    <div>
-      <hr></hr>
-      <h3>Hola</h3>
-    </div>
-  )
+    <footer
+      style={{
+        backgroundColor: "transparent",
+        textAlign: "center",
+        padding: "10px 0",
+        borderTop: "1px solid #ddd",
+        fontSize: "14px",
+        color: "#555",
+        marginTop: "auto",
+      }}
+    >
+      © {new Date().getFullYear()} AirB2B — Todos los derechos reservados.
+    </footer>
+  );
 }
 
-export default Footer
+export default Footer;

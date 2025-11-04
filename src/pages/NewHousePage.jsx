@@ -177,8 +177,7 @@ function NewHousePage() {
       setSubmitSuccess("Alojamiento creado correctamente.");
       const created = response.data;
       const newId = created._id || created.id;
-      if (newId) navigate(`/housingdetails/${newId}`);
-      else navigate("/myhouses");
+      navigate("/myhouses");
     } catch (error) {
       console.error("Error creando alojamiento:", error);
       const msg =
@@ -611,7 +610,7 @@ function NewHousePage() {
                 marginTop: "1rem",
               }}
             >
-              <InputGroup style={{ width: "12ch", justifyContent: "center" }}>
+              <InputGroup style={{ width: "12ch", justifyContent: "center", border:"2px solid black", borderRadius:"20px" }}>
                 <InputGroup.Text
                   style={{
                     fontSize: "2.2rem",

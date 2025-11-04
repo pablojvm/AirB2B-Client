@@ -8,7 +8,7 @@ import {
   Col,
   Alert,
   Spinner,
-  Button,
+  Container,
 } from "react-bootstrap";
 
 function Carousel1() {
@@ -40,19 +40,20 @@ function Carousel1() {
     }
   };
 
-  const totalItems = 12;
+  const totalItems = acc.length;
   const maxStart = Math.max(0, totalItems - pageSize);
   const visible = acc.slice(startIndex, startIndex + pageSize);
 
   const handlePrev = () => {
-    setStartIndex((prev) => Math.max(0, prev - 1));
+    setStartIndex((prev) => Math.max(0, prev - pageSize));
   };
 
   const handleNext = () => {
-    setStartIndex((prev) => Math.min(maxStart, prev + 1));
+    setStartIndex((prev) => Math.min(maxStart, prev + pageSize));
   };
+
   return (
-    <div>
+    <Container className="mt-4">
       <div
         style={{
           display: "flex",
@@ -61,14 +62,11 @@ function Carousel1() {
           alignItems: "center",
         }}
       >
-        <h2>Alojamientos mas populares</h2>
+        <h2>Alojamientos más populares</h2>
 
-        <Pagination>
+        <Pagination className="m-0">
           <Pagination.Prev onClick={handlePrev} disabled={startIndex === 0} />
-          <Pagination.Next
-            onClick={handleNext}
-            disabled={startIndex >= maxStart}
-          />
+          <Pagination.Next onClick={handleNext} disabled={startIndex >= maxStart} />
         </Pagination>
       </div>
 
@@ -79,41 +77,45 @@ function Carousel1() {
       ) : totalItems === 0 ? (
         <Alert variant="info">No hay alojamientos para mostrar.</Alert>
       ) : (
-        <Row>
+        <Row className="g-4 justify-content-start">
           {visible.map((eachAcc, idx) => (
-            <Col key={eachAcc._id ?? startIndex + idx} xl={2} className="mb-3">
+            <Col key={eachAcc._id ?? startIndex + idx} xs={12} sm={6} md={4} lg={3} xl={2}>
               <Card
-                className="border-0"
-                style={{ width: "18rem", textDecoration:"none" }}
+                className="border-0 shadow-sm h-100"
                 as={Link}
                 to={`/housingdetails/${eachAcc._id}`}
+                style={{
+                  textDecoration: "none",
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                }}
               >
                 <Card.Img
-                  src={eachAcc.photos[0]}
+                  src={eachAcc.photos?.[0] || "/placeholder.png"}
                   alt="Alojamiento"
                   style={{
-                    width: "100%",
-                    maxWidth: "350px",
-                    height: "auto",
+                    height: "200px",
                     objectFit: "cover",
-                    border:"2px solid black",
-                    borderRadius:"20px"
                   }}
                 />
 
-                <Card.Body>
-                  <Card.Title>{eachAcc.title}</Card.Title>
-                  <Card.Subtitle className="mb-2 text-muted">
-                    {eachAcc.cost}€
-                  </Card.Subtitle>
-                  <Card.Text>{eachAcc.description}</Card.Text>
+                <Card.Body className="text-center d-flex flex-column">
+                  <div style={{ flex: 1 }}>
+                    <Card.Title style={{ fontSize: "1rem" }}>{eachAcc.title}</Card.Title>
+                    <Card.Subtitle className="mb-2 text-muted">
+                      {eachAcc.cost}€
+                    </Card.Subtitle>
+                  </div>
+                  <Card.Text style={{ fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
+                    {eachAcc.description}
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
           ))}
         </Row>
       )}
-    </div>
+    </Container>
   );
 }
 

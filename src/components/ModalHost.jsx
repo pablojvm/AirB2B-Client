@@ -7,13 +7,21 @@ function ModalHost({ show, handleClose }) {
   return (
     <Modal show={show} onHide={handleClose}>
       <Modal.Header
-        style={{ display: "flex", justifyContent: "center" }}
+        style={{justifyContent: "center" }}
         closeButton
       >
-        <Modal.Title>¿Quieres ser anfitrión?</Modal.Title>
+        <Modal.Title style={{ textAlign: "center", width: "100%" }}>¿Quieres ser anfitrión?</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        <Button variant="light" as={Link} to={"/newHouse"} onClick={handleClose}>Sube tu alojamiento!</Button>
+      <Modal.Body  style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      textAlign: "center",
+    }}>
+        <Button variant="light" as={Link} to={"/newHouse"} onClick={handleClose}>
+        <img src="/casa.png" width="300px"/>
+        <h6>Sube tu alojamiento!</h6>
+        </Button>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>

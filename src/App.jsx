@@ -13,6 +13,7 @@ import Page500 from "./pages/Page500";
 import NewHousePage from "./pages/NewHousePage";
 import YourHouses from "./pages/YourHouses";
 import ProfilePage from "./pages/ProfilPage";
+import EditProfilePage from "./pages/EditProfilePage";
 
 function App() {
 
@@ -36,7 +37,8 @@ function App() {
         <Route path="/favoriteshousing" element={<FavoritesHousingPage />} />
         <Route path="/newHouse" element={<NewHousePage/>}/>
         <Route path="/myHouses" element={<YourHouses/>}/>
-        <Route path="myProfile" element={<ProfilePage/>}/>
+        <Route path="/myProfile" element={<ProfilePage/>}/>
+        <Route path="/editProfile" element={<EditProfilePage/>}/>
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 
