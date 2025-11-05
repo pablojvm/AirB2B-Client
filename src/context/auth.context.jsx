@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import service from "../services/service.config";
+import ModalLogin from "../components/ModalLogin";
 
 const AuthContext = createContext();
 
@@ -7,6 +8,10 @@ function AuthWrapper(props) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedUserId, setLoggedUserId] = useState(null);
   const [isValidatingToken, setIsValidatingToken] = useState(true);
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const openLoginModal = () => setShowLoginModal(true);
+  const closeLoginModal = () => setShowLoginModal(false);
 
   const authenticateUser = async () => {
     const authToken = localStorage.getItem("authToken");
@@ -39,13 +44,16 @@ function AuthWrapper(props) {
     isLoggedIn,
     loggedUserId,
     authenticateUser,
+    showLoginModal,
+    openLoginModal,
+    closeLoginModal,
   };
 
   if (isValidatingToken) {
     return (
       <div>
         <h3>...validando usuario</h3>
-        <img src="/loading.gif" alt="loading"/>
+        <img src="/loading.gif" alt="loading" />
       </div>
     );
   }
@@ -53,6 +61,7 @@ function AuthWrapper(props) {
   return (
     <AuthContext.Provider value={passedContext}>
       {props.children}
+      <ModalLogin show={showLoginModal} handleClose={closeLoginModal} />
     </AuthContext.Provider>
   );
 }

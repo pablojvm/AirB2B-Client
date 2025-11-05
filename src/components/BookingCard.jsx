@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Card, Button, Form, Row, Col, Alert, Spinner } from "react-bootstrap";
 import service from "../services/service.config";
+import { useParams } from "react-router-dom";
+import { AuthContext } from "../context/auth.context";
 
 function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) {
+  const { accommodationId } = useParams();
+  const { loggedUserId, isLoggedIn } = useContext(AuthContext);
+
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [guests, setGuests] = useState(1);
@@ -14,7 +19,7 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
 
   const parseDate = (d) => {
     if (!d) return null;
-    const parts = d.split("-"); // yyyy-mm-dd
+    const parts = d.split("-");
     return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   };
 
@@ -22,21 +27,20 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
     const start = parseDate(from);
     const end = parseDate(to);
     if (!start || !end) return 0;
-    // calcula la diferencia en días completos (end - start)
-    const diffMs = end.setHours(0, 0, 0, 0) - start.setHours(0, 0, 0, 0);
+    const diffMs = end - start;
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
     return diffDays > 0 ? diffDays : 0;
   };
 
   const total = nightsCount() * pricePerNight;
 
-  // validate devuelve mensaje de error o null
   const validate = () => {
     if (!from || !to) return "Selecciona fecha de entrada y salida";
     const nights = nightsCount();
     if (nights <= 0) return "La fecha de salida debe ser posterior a la de entrada";
     if (nights < minNights) return `La estancia mínima son ${minNights} noche(s)`;
-    if (!Number.isInteger(guests) || guests < 1 || guests > maxGuests) return `Número de huéspedes entre 1 y ${maxGuests}`;
+    if (!Number.isInteger(guests) || guests < 1 || guests > maxGuests)
+      return `Número de huéspedes entre 1 y ${maxGuests}`;
     return null;
   };
 
@@ -51,17 +55,25 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
       return;
     }
 
+    if (!isLoggedIn) {
+      setError("Debes iniciar sesión para realizar una reserva.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const payload = {
-        accommodation: accommodation._id,
-        from,
-        to,
-        guests,
+      console.log(loggedUserId)
+      console.log(total)
+      const newBooking = {
+        accommodationId: accommodationId,
+        userId: loggedUserId,
+        start: from,
+        end: to,
+        cost: total,
+        guests: guests
       };
 
-      const res = await service.post("/booking", payload);
-
+      const res = await service.post("/booking/new", newBooking);
       setSuccess("Reserva realizada correctamente");
       setError("");
       onBooked?.(res.data);
@@ -79,7 +91,9 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
         <Card.Title className="d-flex justify-content-between align-items-center">
           <div>
             {accommodation?.title ?? "Alojamiento"}
-            <div style={{ fontSize: 12, color: "#666" }}>{pricePerNight} € / noche</div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              {pricePerNight} € / noche
+            </div>
           </div>
         </Card.Title>
 
@@ -152,7 +166,7 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
         </Form>
 
         <small className="text-muted d-block mt-2">
-          Pago seguro. Cancelación según política del anfitrión.
+          No se te cobrará nada todavia. Deberás acceder al pago en tus reservas.
         </small>
       </Card.Body>
     </Card>
@@ -160,3 +174,4 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
 }
 
 export default BookingCard;
+

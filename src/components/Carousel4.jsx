@@ -1,21 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import service from "../services/service.config";
-import { Card, Pagination, Row, Col, Alert, Spinner, Container } from "react-bootstrap";
+import { Card, Pagination, Row, Col, Spinner, Container } from "react-bootstrap";
+import { AuthContext } from "../context/auth.context";
 
 function Carousel4() {
   const navigate = useNavigate();
+  const { isLoggedIn } = useContext(AuthContext); // 👈 Saber si está logueado
 
   const [acc, setAcc] = useState([]);
   const [loading, setLoading] = useState(true);
-  const pageSize = 6; // tarjetas visibles por página
+  const pageSize = 6;
   const [startIndex, setStartIndex] = useState(0);
 
   useEffect(() => {
-    getData();
-  }, []);
+    if (isLoggedIn) {
+      getData();
+    }
+  }, [isLoggedIn]);
 
-  // reinicia la paginación si cambian los alojamientos
   useEffect(() => {
     setStartIndex(0);
   }, [acc]);
@@ -32,6 +35,9 @@ function Carousel4() {
       setLoading(false);
     }
   };
+
+  // Si no está logueado, no renderizamos nada
+  if (!isLoggedIn) return null;
 
   const totalItems = acc.length;
   const maxStart = Math.max(0, totalItems - pageSize);
@@ -63,7 +69,7 @@ function Carousel4() {
           <Spinner animation="border" role="status" />
         </div>
       ) : totalItems === 0 ? (
-        <Alert variant="info">No hay alojamientos para mostrar.</Alert>
+        <p className="text-muted mt-3">No hay alojamientos para mostrar.</p>
       ) : (
         <Row className="g-4 justify-content-start">
           {visible.map((eachAcc, idx) => (

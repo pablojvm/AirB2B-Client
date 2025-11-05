@@ -21,13 +21,6 @@ function FavoritesHousingPage() {
       setHouses(response.data ?? []);
     } catch (error) {
       console.log("Error al obtener favoritos:", error);
-      // if (error.response?.status === 401) {
-      //   if (typeof authenticateUser === "function") {
-      //     await authenticateUser();
-      //   }
-      //   return;
-      // }
-
       navigate("/500");
     } finally {
       setLoading(false);

@@ -301,7 +301,7 @@ function ProfilePage() {
                       <h4 className="mt-3">Aún no has hecho ningún viaje</h4>
                       <Button
                         as={Link}
-                        to="/search"
+                        to="/"
                         variant="outline-dark"
                         className="mt-3"
                       >

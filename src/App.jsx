@@ -14,11 +14,21 @@ import NewHousePage from "./pages/NewHousePage";
 import YourHouses from "./pages/YourHouses";
 import ProfilePage from "./pages/ProfilPage";
 import EditProfilePage from "./pages/EditProfilePage";
+import ModalLogin from "./components/ModalLogin";
+import { useState } from "react";
+import OnlyPrivate from "./components/OnlyPrivate";
+import MyBookings from "./pages/MyBookings";
+import PaymentPage from "./pages/PaymentPage";
 
 function App() {
 
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+
   return (
     <>
+
+      <ModalLogin show={showLoginModal} handleClose={() => setShowLoginModal(false)} />
       <NavBar/>
 
       <Routes>
@@ -29,16 +39,18 @@ function App() {
               <Carousel1 />
               <Carousel2 />
               <Carousel3 />
-              {/* <Carousel4 /> */}
+              <Carousel4 />
             </>
           }
         />
         <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
-        <Route path="/favoriteshousing" element={<FavoritesHousingPage />} />
-        <Route path="/newHouse" element={<NewHousePage/>}/>
-        <Route path="/myHouses" element={<YourHouses/>}/>
-        <Route path="/myProfile" element={<ProfilePage/>}/>
-        <Route path="/editProfile" element={<EditProfilePage/>}/>
+        <Route path="/favoriteshousing" element={<OnlyPrivate><FavoritesHousingPage/></OnlyPrivate>} />
+        <Route path="/newHouse" element={<OnlyPrivate><NewHousePage/></OnlyPrivate>}/>
+        <Route path="/myHouses" element={<OnlyPrivate><YourHouses/></OnlyPrivate>}/>
+        <Route path="/myProfile" element={<OnlyPrivate><ProfilePage/></OnlyPrivate>}/>
+        <Route path="/editProfile" element={<OnlyPrivate><EditProfilePage/></OnlyPrivate>}/>
+        <Route path="/myBookings" element={<OnlyPrivate><MyBookings/></OnlyPrivate>}/>
+        <Route path="/payment/:bookingId" element={<OnlyPrivate><PaymentPage/></OnlyPrivate>}/>
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 

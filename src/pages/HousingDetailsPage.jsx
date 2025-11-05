@@ -11,7 +11,8 @@ function HousingDetailsPage() {
   const { isLoggedIn } = useContext(AuthContext);
 
   const [acc, setAcc] = useState(null);
-  const [isFav, setIsFav] = useState(false); // booleano: true = favorito
+  const [fav, setFav] = useState([]); // <-- IDs de favoritos
+  const [isFav, setIsFav] = useState(false);
 
   useEffect(() => {
     if (!params.accommodationId) return;
@@ -24,11 +25,76 @@ function HousingDetailsPage() {
         `/accommodation/${params.accommodationId}`
       );
       setAcc(response.data);
-      // si quieres inicializar el estado de favorito desde los datos:
-      // setIsFav(response.data.isFavorite ?? false);
     } catch (error) {
       console.log(error);
       navigate("/500");
+    }
+  };
+
+  // cuando el usuario está logeado y hay id, traemos sus favoritos
+  useEffect(() => {
+    if (isLoggedIn && params.accommodationId) {
+      infoFavorites();
+    } else {
+      // si no está logueado limpiamos favoritos locales
+      setFav([]);
+    }
+  }, [isLoggedIn, params.accommodationId]);
+
+  // sincronizamos isFav según acc y fav
+  useEffect(() => {
+    if (!acc?._id) {
+      setIsFav(false);
+      return;
+    }
+    setIsFav(fav.includes(acc._id));
+  }, [acc, fav]);
+
+  const infoFavorites = async () => {
+    try {
+      // Asumo que service.config añade Authorization automáticamente
+      const response = await service.get("/accommodation/favorites");
+      const ids = Array.isArray(response.data)
+        ? response.data.map((f) => f._id)
+        : [];
+      setFav(ids);
+    } catch (error) {
+      console.log("Error al obtener favoritos:", error);
+      const status = error.response?.status;
+      if (status === 401) {
+        // no autorizado: token inválido/expirado -> limpiamos fav
+        setFav([]);
+      } else if (status !== 403) {
+        navigate("/500");
+      }
+    }
+  };
+
+  const handleToggleFav = async () => {
+    if (!isLoggedIn) {
+      alert("Debes iniciar sesión para guardar favoritos");
+      return;
+    }
+
+    if (!acc?._id) return;
+
+    try {
+      if (!fav.includes(acc._id)) {
+        await service.post(`/accommodation/favorites/${acc._id}`);
+        setFav((prev) => [...prev, acc._id]);
+        setIsFav(true);
+      } else {
+        await service.delete(`/accommodation/favorites/${acc._id}`);
+        setFav((prev) => prev.filter((id) => id !== acc._id));
+        setIsFav(false);
+      }
+    } catch (error) {
+      console.log("Error al togglear favorito:", error);
+      if (error.response?.status === 401) {
+        alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+      } else {
+        alert(error.response?.data?.message || "Error al actualizar favoritos");
+      }
     }
   };
 
@@ -60,58 +126,6 @@ function HousingDetailsPage() {
     "Breakfast included": "/desayuno.png",
     "24h check-in": "/checking.png",
   };
-
-  //   useEffect(() => {
-  //     if (isLoggedIn && params.accommodationId) {
-  //       infoFavorites();
-  //     }
-  //   }, [isLoggedIn, params.accommodationId]);
-
-  //   const infoFavorites = async () => {
-  //   try {
-  //     const token = localStorage.getItem("authToken");
-  //     const response = await service.get('/accommodation/favorites', {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`
-  //       }
-  //     });
-  //     setFav(response.data.map(favAcc => favAcc._id));
-  //   } catch (error) {
-  //     console.log("Error al obtener favoritos:", error);
-  //     if (error.response?.status === 401) {
-  //     } else if (error.response?.status !== 403) {
-  //       navigate("/500");
-  //     }
-  //   }
-  // };
-
-  const handleToggleFav = () => {
-    // estado local (ui only). La lógica real con llamadas al backend la dejaste comentada arriba.
-    setIsFav((prev) => !prev);
-  };
-
-  //   const handleToggleFav = async () => {
-  //     // Check if user is logged in before attempting
-  //     if (!isLoggedIn) {
-  //       alert("Debes iniciar sesión para guardar favoritos");
-  //       return;
-  //     }
-
-  //     try {
-  //       if (!fav.includes(acc._id)) {
-  //         await service.post(`/accommodation/favorites/${acc._id}`);
-  //         setFav(prev => [...prev, acc._id]);
-  //       } else {
-  //         await service.delete(`/accommodation/favorites/${acc._id}`);
-  //         setFav(prev => prev.filter(id => id !== acc._id));
-  //       }
-  //     } catch (error) {
-  //       console.log(error);
-  //       if (error.response?.status === 401) {
-  //         alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-  //       }
-  //     }
-  //   };
 
   if (!acc)
     return (
@@ -199,10 +213,10 @@ function HousingDetailsPage() {
         </Col>
       </Row>
 
-      <div style={{display:"flex", }}>
-        <div>
+      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
           {/* Info principal */}
-          <Row className="mb-3" style={{display:"flex", flexDirection:"column"}}>
+          <Row className="mb-3" style={{ display: "flex", flexDirection: "column" }}>
             <Col xs={12} md={8}>
               <h5>Descripción</h5>
               <p style={{ whiteSpace: "pre-wrap" }}>{acc.description}</p>
@@ -277,13 +291,10 @@ function HousingDetailsPage() {
             </Col>
           </Row>
         </div>
-        <div>
+
+        <div style={{ width: 320 }}>
           <BookingCard
-            accommodation={{
-              _id: "123",
-              title: "Apartamento centro",
-              cost: 45,
-            }}
+            accommodation={acc}
             onBooked={(r) => console.log(r)}
           />
         </div>

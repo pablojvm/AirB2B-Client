@@ -69,7 +69,7 @@ function NavBar() {
     padding: 6,
     onClick: ""
   }}>
-        <img src="/config.png" width="20px" alt="configuración" />
+        <img src="/burguer.png" width="20px" alt="Menu" />
       </Button>
 
       {isLoggedIn ? (
@@ -78,7 +78,10 @@ function NavBar() {
             Mis Alojamientos
           </Dropdown.Item>
           <Dropdown.Item as={Link} to="/favoriteshousing">
-            Mis Favoritos
+            Favoritos
+          </Dropdown.Item>
+          <Dropdown.Item as={Link} to="/myBookings">
+            Reservas
           </Dropdown.Item>
           <Dropdown.Item as={Link} to="/myProfile">
             Perfil
