@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import service from "../services/service.config";
 
-function MyBookings() {
+function MyBookingsPage() {
   const [houses, setHouses] = useState([]); // pending bookings
   const [lastHouses, setLastHouses] = useState([]); // past bookings
   const [loading, setLoading] = useState(true);
@@ -146,4 +146,4 @@ function MyBookings() {
   );
 }
 
-export default MyBookings;
+export default MyBookingsPage;

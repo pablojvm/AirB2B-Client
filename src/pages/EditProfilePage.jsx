@@ -42,20 +42,15 @@ function EditProfilePage() {
   uploadData.append("image", file);
 
   try {
-    // 1) subir imagen (devuelve imageUrl)
     const uploadRes = await service.post("/upload", uploadData);
     const imageUrl = uploadRes.data?.imageUrl;
     if (!imageUrl) throw new Error("No imageUrl returned from upload");
 
-    // 2) guardar URL en el user (persistir en BD)
     const saveRes = await service.patch("/user/profile", { photo: imageUrl });
-    // si tu backend devuelve el user actualizado, úsalo:
     if (saveRes.data?.user) {
       setProfile(saveRes.data.user);
     } else {
-      // fallback: actualizar solo el campo photo en el cliente
       setProfile((prev) => (prev ? { ...prev, photo: imageUrl } : prev));
-      // opcional: await getProfile();
     }
   } catch (error) {
     console.error("Error uploading & saving image:", error);

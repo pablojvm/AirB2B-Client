@@ -86,6 +86,9 @@ function NavBar() {
           <Dropdown.Item as={Link} to="/myProfile">
             Perfil
           </Dropdown.Item>
+          <Dropdown.Item as={Link} to="/myReviews">
+            Mis reseñas
+          </Dropdown.Item>
           <Dropdown.Divider />
           <Dropdown.Item onClick={handleLogout}>Cerrar Sesión</Dropdown.Item>
         </Dropdown.Menu>

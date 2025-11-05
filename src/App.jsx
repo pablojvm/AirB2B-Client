@@ -17,8 +17,9 @@ import EditProfilePage from "./pages/EditProfilePage";
 import ModalLogin from "./components/ModalLogin";
 import { useState } from "react";
 import OnlyPrivate from "./components/OnlyPrivate";
-import MyBookings from "./pages/MyBookings";
+import MyBookingsPage from "./pages/MyBookingsPage";
 import PaymentPage from "./pages/PaymentPage";
+import MyReviewsPage from "./pages/MyReviewsPage";
 
 function App() {
 
@@ -49,7 +50,8 @@ function App() {
         <Route path="/myHouses" element={<OnlyPrivate><YourHouses/></OnlyPrivate>}/>
         <Route path="/myProfile" element={<OnlyPrivate><ProfilePage/></OnlyPrivate>}/>
         <Route path="/editProfile" element={<OnlyPrivate><EditProfilePage/></OnlyPrivate>}/>
-        <Route path="/myBookings" element={<OnlyPrivate><MyBookings/></OnlyPrivate>}/>
+        <Route path="/myBookings" element={<OnlyPrivate><MyBookingsPage/></OnlyPrivate>}/>
+        <Route path="/myReviews" element={<OnlyPrivate><MyReviewsPage/></OnlyPrivate>}/>
         <Route path="/payment/:bookingId" element={<OnlyPrivate><PaymentPage/></OnlyPrivate>}/>
         <Route path="/500" element={<Page500/>}/>
       </Routes>
