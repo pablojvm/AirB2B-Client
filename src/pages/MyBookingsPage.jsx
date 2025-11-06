@@ -47,7 +47,9 @@ function MyBookingsPage() {
       <Container className="mt-4">
         <h1 className="mb-4">Tus reservas</h1>
 
-        {houses.length === 0 && <Alert variant="info">No tienes reservas pendientes.</Alert>}
+        {houses.length === 0 && (
+          <Alert variant="info">No tienes reservas pendientes.</Alert>
+        )}
 
         <Row className="g-4 justify-content-start">
           {houses.map((booking, idx) => {
@@ -58,7 +60,11 @@ function MyBookingsPage() {
                 <Card
                   className="border-0 shadow-sm h-100"
                   as={Link}
-                  to={`/payment/${booking._id}`} // <- ruta a /payment/:bookingId
+                  to={
+                    booking.status === "pending"
+                      ? `/payment/${booking._id}`
+                      : `/housingDetails/${acc._id}`
+                  } // <- ruta dinámica correcta
                   style={{
                     textDecoration: "none",
                     borderRadius: "20px",
@@ -104,7 +110,9 @@ function MyBookingsPage() {
       <Container className="mt-4">
         <h1 className="mb-4">Viajes anteriores</h1>
 
-        {lastHouses.length === 0 && <Alert>¡Aún no tienes reservas terminadas!</Alert>}
+        {lastHouses.length === 0 && (
+          <Alert>¡Aún no tienes reservas terminadas!</Alert>
+        )}
 
         <Row className="g-4 justify-content-start">
           {lastHouses.map((booking, idx) => {

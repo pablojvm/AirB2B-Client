@@ -8,7 +8,7 @@ function Footer() {
         borderTop: "1px solid #ddd",
         fontSize: "14px",
         color: "#555",
-        marginTop: "auto",
+        marginTop: "20px",
       }}
     >
       © {new Date().getFullYear()} AirB2B — Todos los derechos reservados.

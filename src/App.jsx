@@ -20,6 +20,7 @@ import OnlyPrivate from "./components/OnlyPrivate";
 import MyBookingsPage from "./pages/MyBookingsPage";
 import PaymentPage from "./pages/PaymentPage";
 import MyReviewsPage from "./pages/MyReviewsPage";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
 
@@ -53,6 +54,7 @@ function App() {
         <Route path="/myBookings" element={<OnlyPrivate><MyBookingsPage/></OnlyPrivate>}/>
         <Route path="/myReviews" element={<OnlyPrivate><MyReviewsPage/></OnlyPrivate>}/>
         <Route path="/payment/:bookingId" element={<OnlyPrivate><PaymentPage/></OnlyPrivate>}/>
+        <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/500" element={<Page500/>}/>
       </Routes>
 

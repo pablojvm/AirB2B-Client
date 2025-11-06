@@ -179,7 +179,7 @@ function HousingDetailsPage() {
             <img
               src={isFav ? "/corazon-rojo.png" : "/corazon.png"}
               alt={isFav ? "Favorito" : "No favorito"}
-              style={{ width: 30, height: 30 }}
+              style={{ width: 50, height: 50 }}
             />
           </Button>
         </Col>
