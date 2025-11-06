@@ -192,7 +192,12 @@ function HousingDetailsPage() {
             src={mainImage}
             alt={acc.title}
             fluid
-            style={{ width: "100%", height: 420, objectFit: "cover", borderRadius: 12 }}
+            style={{
+              width: "100%",
+              height: 420,
+              objectFit: "cover",
+              borderRadius: 12,
+            }}
             loading="lazy"
           />
         </Col>
@@ -217,7 +222,10 @@ function HousingDetailsPage() {
       {/* Info y servicios */}
       <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <Row className="mb-3" style={{ display: "flex", flexDirection: "column" }}>
+          <Row
+            className="mb-3"
+            style={{ display: "flex", flexDirection: "column" }}
+          >
             <Col xs={12} md={8}>
               <h5>Descripción</h5>
               <p style={{ whiteSpace: "pre-wrap" }}>{acc.description}</p>
@@ -225,36 +233,36 @@ function HousingDetailsPage() {
             <Col xs={12} md={4}>
               <div className="d-flex align-items-center mb-3">
                 {acc.owner.photo ? (
-          <img
-            src={acc.owner.photo}
-            alt="Foto de perfil"
-            style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "50%",
-              objectFit: "cover",
-              display: "block",
-              margin: "0 auto",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "50%",
-              backgroundColor: "#000",
-              color: "#fff",
-              fontSize: "24px",
-              lineHeight: "60px",
-              textAlign: "center",
-              margin: "0 auto",
-            }}
-            aria-hidden
-          >
-            {initial}
-          </div>
-        )}
+                  <img
+                    src={acc.owner.photo}
+                    alt="Foto de perfil"
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      display: "block",
+                      margin: "0 auto",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      backgroundColor: "#000",
+                      color: "#fff",
+                      fontSize: "24px",
+                      lineHeight: "60px",
+                      textAlign: "center",
+                      margin: "0 auto",
+                    }}
+                    aria-hidden
+                  >
+                    {initial}
+                  </div>
+                )}
                 <div>
                   <div style={{ fontWeight: 600 }}>{acc.owner?.username}</div>
                   <small style={{ color: "#666" }}>Anfitrión</small>
@@ -264,7 +272,8 @@ function HousingDetailsPage() {
               <div>
                 <div style={{ marginBottom: 8 }}>
                   <strong>
-                    {acc.bedrooms} dormitorios · {acc.beds} camas · {acc.bathrooms} baños
+                    {acc.bedrooms} dormitorios · {acc.beds} camas ·{" "}
+                    {acc.bathrooms} baños
                   </strong>
                 </div>
                 <Badge bg="warning" text="dark">
@@ -278,7 +287,9 @@ function HousingDetailsPage() {
             <Col>
               <h4>¿Que ofrece este alojamiento?</h4>
               <div className="d-flex flex-wrap gap-3">
-                {(acc.services ?? []).length === 0 && <small>No hay servicios listados.</small>}
+                {(acc.services ?? []).length === 0 && (
+                  <small>No hay servicios listados.</small>
+                )}
                 {(acc.services ?? []).map((s) => (
                   <div
                     key={s}
@@ -334,7 +345,10 @@ function HousingDetailsPage() {
 
         {loggedUserId ? (
           <div className="mb-3">
-            <button className="btn btn-secondary" onClick={() => setShowForm((prev) => !prev)}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowForm((prev) => !prev)}
+            >
               {showForm ? "Cerrar formulario" : "Escribir reseña"}
             </button>
           </div>
@@ -349,13 +363,25 @@ function HousingDetailsPage() {
           />
         )}
 
-        {reviews.map((r) => (
-          <div key={r._id} className="card mb-2 p-2">
-            <strong>{r.creator?.username ?? "Usuario"}</strong> - {r.stars} ⭐
-            <h6>{r.title}</h6>
-            <p>{r.text}</p>
-          </div>
-        ))}
+        {reviews.length === 0 ? (
+    <p className="text-muted fst-italic mt-3">
+      Aún no hay reseñas para este alojamiento. ¡Sé el primero en opinar! 💬
+    </p>
+  ) : (
+    /* 📝 Mostrar las reseñas existentes */
+    reviews.map((r) => (
+      <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
+        <strong>
+          {r.creator && typeof r.creator === "object"
+            ? r.creator.username
+            : r.creator || "Usuario"}
+        </strong>{" "}
+        - {r.stars} ⭐
+        <h6 className="mt-2 mb-1">{r.title}</h6>
+        <p className="mb-0">{r.text}</p>
+      </div>
+    ))
+  )}
       </div>
     </Container>
   );

@@ -21,6 +21,7 @@ import MyBookingsPage from "./pages/MyBookingsPage";
 import PaymentPage from "./pages/PaymentPage";
 import MyReviewsPage from "./pages/MyReviewsPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import PaginaResultados from "./pages/PaginaResultados";
 
 function App() {
 
@@ -46,6 +47,7 @@ function App() {
           }
         />
         <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
+        <Route path="/search" element={<PaginaResultados/>}/>
         <Route path="/favoriteshousing" element={<OnlyPrivate><FavoritesHousingPage/></OnlyPrivate>} />
         <Route path="/newHouse" element={<OnlyPrivate><NewHousePage/></OnlyPrivate>}/>
         <Route path="/myHouses" element={<OnlyPrivate><YourHouses/></OnlyPrivate>}/>

@@ -2,10 +2,10 @@ import { useEffect, useState, useContext } from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { AuthContext } from "../context/auth.context";
 import service from "../services/service.config";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function MyReviewsPage() {
-  const { isLoggedIn, loggedUserId } = useContext(AuthContext);
+  const { isLoggedIn } = useContext(AuthContext);
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,8 @@ function MyReviewsPage() {
 
   const fetchMyReviews = async () => {
     try {
-      const response = await service.get("/review/my"); // Endpoint que devuelve tus reseñas
+      const response = await service.get("/review/own");
+      console.log(response.data)
       setReviews(response.data);
     } catch (error) {
       console.log("Error al cargar tus reseñas:", error);
@@ -62,7 +63,7 @@ function MyReviewsPage() {
       <Row className="mt-3">
         {reviews.map((r) => (
           <Col xs={12} md={6} key={r._id} className="mb-3">
-            <Card>
+            <Card as={Link} to={`/housingDetails/${r.accommodation._id}`} style={{textDecoration:"none"}}>
               <Card.Body>
                 <Card.Title>
                   {r.accommodation?.title ?? "Alojamiento"} - {r.stars} ⭐

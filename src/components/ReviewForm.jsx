@@ -1,5 +1,7 @@
 import { useState } from "react";
 import service from "../services/service.config";
+import { AuthContext } from "../context/auth.context";
+import { useContext } from "react";
 
 function ReviewForm({ accommodationId, onNewReview }) {
   const [title, setTitle] = useState("");
@@ -7,6 +9,8 @@ function ReviewForm({ accommodationId, onNewReview }) {
   const [stars, setStars] = useState(5);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { loggedUserId } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +28,7 @@ function ReviewForm({ accommodationId, onNewReview }) {
         title,
         text,
         stars,
+        creator: loggedUserId,
         accommodation: accommodationId
       });
       onNewReview(response.data); // enviar la nueva reseña al componente padre
