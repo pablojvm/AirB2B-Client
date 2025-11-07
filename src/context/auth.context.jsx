@@ -51,9 +51,8 @@ function AuthWrapper(props) {
 
   if (isValidatingToken) {
     return (
-      <div>
-        <h3>...validando usuario</h3>
-        <img src="/loading.gif" alt="loading" />
+      <div style={{alignContent:"center"}}>
+        <img src="/airbnb.gif" alt="loading" />
       </div>
     );
   }
