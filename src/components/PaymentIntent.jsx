@@ -4,7 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import service from "../services/service.config";
 import CheckoutForm from "./CheckoutForm";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 function PaymentIntent({ productDetails }) {
   const [clientSecret, setClientSecret] = useState("");
