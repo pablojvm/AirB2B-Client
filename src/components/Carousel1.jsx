@@ -24,6 +24,7 @@ function Carousel1() {
   }, []);
 
   useEffect(() => {
+    // si cambian los alojamientos, volvemos al inicio
     setStartIndex(0);
   }, [acc]);
 
@@ -31,6 +32,7 @@ function Carousel1() {
     try {
       setLoading(true);
       const response = await service.get(`/accommodation/popular`);
+      console.log(response.data);
       setAcc(response.data ?? []);
     } catch (error) {
       console.log(error);
@@ -45,11 +47,11 @@ function Carousel1() {
   const visible = acc.slice(startIndex, startIndex + pageSize);
 
   const handlePrev = () => {
-    setStartIndex((prev) => Math.max(0, prev - pageSize));
+    setStartIndex((prev) => Math.max(0, prev - 1)); 
   };
 
   const handleNext = () => {
-    setStartIndex((prev) => Math.min(maxStart, prev + pageSize));
+    setStartIndex((prev) => Math.min(maxStart, prev + 1)); 
   };
 
   return (
@@ -102,11 +104,18 @@ function Carousel1() {
                 <Card.Body className="text-center d-flex flex-column">
                   <div style={{ flex: 1 }}>
                     <Card.Title style={{ fontSize: "1rem" }}>{eachAcc.title}</Card.Title>
-                    <Card.Subtitle className="mb-2 text-muted">
-                      {eachAcc.cost}€
-                    </Card.Subtitle>
+                    <Card.Subtitle className="mb-2 text-muted">{eachAcc.cost}€</Card.Subtitle>
                   </div>
-                  <Card.Text style={{ fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
+                  <Card.Text
+                    style={{
+                      fontSize: "0.85rem",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
                     {eachAcc.description}
                   </Card.Text>
                 </Card.Body>

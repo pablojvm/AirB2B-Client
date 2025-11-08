@@ -37,11 +37,11 @@ function Carousel2() {
   const visible = acc.slice(startIndex, startIndex + pageSize);
 
   const handlePrev = () => {
-    setStartIndex((prev) => Math.max(0, prev - pageSize));
+    setStartIndex((prev) => Math.max(0, prev - 1)); // mover 1 hacia atrás
   };
 
   const handleNext = () => {
-    setStartIndex((prev) => Math.min(maxStart, prev + pageSize));
+    setStartIndex((prev) => Math.min(maxStart, prev + 1)); // mover 1 hacia adelante
   };
 
   return (
