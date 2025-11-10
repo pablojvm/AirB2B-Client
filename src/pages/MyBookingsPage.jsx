@@ -1,7 +1,6 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { Card, Row, Col, Container, Badge, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/auth.context";
 import service from "../services/service.config";
 
 function MyBookingsPage() {
@@ -9,7 +8,6 @@ function MyBookingsPage() {
   const [lastHouses, setLastHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { authenticateUser } = useContext(AuthContext);
 
   useEffect(() => {
     tripsPending();
@@ -42,17 +40,24 @@ function MyBookingsPage() {
     }
   };
 
+  if (loading)
+    return (
+      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+        <img src="/airbnb.gif" alt="loading" />
+      </div>
+    );
+
   return (
     <div>
       <Container className="mt-4">
         <h1 className="mb-4">Tus reservas</h1>
-
         {houses.length === 0 && (
           <Alert variant="info">No tienes reservas pendientes.</Alert>
         )}
-
         <Row className="g-4 justify-content-start">
           {houses.map((booking, idx) => {
+            const start = new Date(booking.start);
+            const end = new Date(booking.end);
             const acc = booking.accommodation || {};
             return (
               <Col key={booking._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
@@ -63,7 +68,7 @@ function MyBookingsPage() {
                     booking.status === "pending"
                       ? `/payment/${booking._id}`
                       : `/housingDetails/${acc._id}`
-                  } 
+                  }
                   style={{
                     textDecoration: "none",
                     borderRadius: "20px",
@@ -80,11 +85,16 @@ function MyBookingsPage() {
                     }}
                     loading="lazy"
                   />
-
                   <Card.Body className="text-center">
                     <Card.Title style={{ fontSize: "1rem" }}>
                       {acc.title || "Alojamiento"}
                     </Card.Title>
+                    <Card.Text>
+                      Desde {start.toLocaleDateString("es-ES")}
+                    </Card.Text>
+                    <Card.Text>
+                      Hasta {end.toLocaleDateString("es-ES")}
+                    </Card.Text>
 
                     <Badge
                       bg={booking.status === "pending" ? "warning" : "success"}
@@ -105,14 +115,11 @@ function MyBookingsPage() {
           })}
         </Row>
       </Container>
-
       <Container className="mt-4">
         <h1 className="mb-4">Viajes anteriores</h1>
-
         {lastHouses.length === 0 && (
           <Alert>¡Aún no tienes reservas terminadas!</Alert>
         )}
-
         <Row className="g-4 justify-content-start">
           {lastHouses.map((booking, idx) => {
             const acc = booking.accommodation || {};

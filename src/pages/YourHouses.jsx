@@ -23,8 +23,7 @@ function YourHouses() {
 
   return (
     <Container className="mt-4">
-      <h1 className="mb-4">Tus anuncios</h1>
-
+      <h1 className="mb-4">Tus alojamientos</h1>
       <Row className="g-4 justify-content-start">
         {houses.map((eachAcc, idx) => (
           <Col key={eachAcc._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>

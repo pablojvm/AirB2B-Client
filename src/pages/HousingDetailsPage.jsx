@@ -15,6 +15,7 @@ function HousingDetailsPage() {
   const [fav, setFav] = useState([]);
   const [isFav, setIsFav] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [stars, setStars] = useState(0)
   const [showForm, setShowForm] = useState(false);
 
   const imagesServices = {
@@ -124,13 +125,17 @@ function HousingDetailsPage() {
     }
   };
 
-  useEffect(() => {
-    if (!params.accommodationId) return;
-    service
-      .get(`/review/${params.accommodationId}`)
-      .then((res) => setReviews(res.data))
-      .catch((err) => console.log("Error al cargar reseñas:", err));
-  }, [params.accommodationId]);
+ useEffect(() => {
+  if (!params.accommodationId) return;
+  service
+    .get(`/review/${params.accommodationId}`)
+    .then((res) => {
+      setReviews(res.data.reviews);
+      setStars(res.data.avgStars);
+    })
+    .catch((err) => console.log("Error al cargar reseñas:", err));
+}, [params.accommodationId]);
+
 
   const handleNewReview = (review) => {
     setReviews((prev) => [review, ...prev]);
@@ -273,7 +278,7 @@ function HousingDetailsPage() {
                   </strong>
                 </div>
                 <Badge bg="warning" text="dark">
-                  ☆ {acc.stars ?? "—"}
+                  ☆ {stars ?? "—"}
                 </Badge>
               </div>
             </Col>
@@ -335,7 +340,6 @@ function HousingDetailsPage() {
         </div>
       </div>
 
-      {/* Reseñas */}
       <div className="mt-4">
         <h2>Reseñas</h2>
 
