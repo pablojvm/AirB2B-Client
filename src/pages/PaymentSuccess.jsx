@@ -42,7 +42,9 @@ function PaymentSuccess() {
       const res = await service.patch("/payment/update-payment-intent", paymentIntentInfo);
       const data = res.data || {};
       setPayment(data.payment);
-      if (data.booking) setBooking(data.booking);
+      setBooking(data.booking);
+      console.log(data.payment)
+      console.log(data.booking)
       setIsFetching(false);
     } catch (err) {
       console.error("Error actualizando payment:", err);
