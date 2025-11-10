@@ -54,7 +54,6 @@ function MyBookingsPage() {
         <Row className="g-4 justify-content-start">
           {houses.map((booking, idx) => {
             const acc = booking.accommodation || {};
-            // usamos booking._id para navegar al pago de esa reserva concreta
             return (
               <Col key={booking._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
                 <Card
@@ -64,7 +63,7 @@ function MyBookingsPage() {
                     booking.status === "pending"
                       ? `/payment/${booking._id}`
                       : `/housingDetails/${acc._id}`
-                  } // <- ruta dinámica correcta
+                  } 
                   style={{
                     textDecoration: "none",
                     borderRadius: "20px",

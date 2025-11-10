@@ -139,7 +139,7 @@ function HousingDetailsPage() {
   if (!acc)
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-        <img src="/animatedviolin.gif" alt="loading" />
+        <img src="/airbnb.gif" alt="loading" />
       </div>
     );
 
