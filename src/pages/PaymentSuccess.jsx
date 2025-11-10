@@ -114,7 +114,7 @@ function PaymentSuccess() {
                   <div style={{ display: "flex", gap: 12, marginTop: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 140, height: 100, borderRadius: 12, overflow: "hidden", background: "#f3f3f3" }}>
                       <img
-                        src={booking.accommodation.photos[0]}
+                        src={booking.accommodation.photos?.[0]}
                         alt="foto alojamiento"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
