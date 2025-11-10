@@ -124,7 +124,6 @@ function HousingDetailsPage() {
     }
   };
 
-  // Cargar reseñas
   useEffect(() => {
     if (!params.accommodationId) return;
     service
@@ -158,7 +157,6 @@ function HousingDetailsPage() {
 
   return (
     <Container className="mt-4">
-      {/* Cabecera y favorito */}
       <Row className="align-items-center mb-3">
         <Col xs={12} md={9}>
           <h3>{acc.title}</h3>
@@ -185,7 +183,6 @@ function HousingDetailsPage() {
         </Col>
       </Row>
 
-      {/* Imágenes */}
       <Row className="mb-4">
         <Col xs={12} lg={7}>
           <Image
@@ -219,7 +216,6 @@ function HousingDetailsPage() {
         </Col>
       </Row>
 
-      {/* Info y servicios */}
       <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
           <Row
@@ -368,7 +364,6 @@ function HousingDetailsPage() {
       Aún no hay reseñas para este alojamiento. ¡Sé el primero en opinar! 💬
     </p>
   ) : (
-    /* 📝 Mostrar las reseñas existentes */
     reviews.map((r) => (
       <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
         <strong>

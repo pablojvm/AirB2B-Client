@@ -24,7 +24,6 @@ function Carousel1() {
   }, []);
 
   useEffect(() => {
-    // si cambian los alojamientos, volvemos al inicio
     setStartIndex(0);
   }, [acc]);
 
@@ -32,7 +31,6 @@ function Carousel1() {
     try {
       setLoading(true);
       const response = await service.get(`/accommodation/popular`);
-      console.log(response.data);
       setAcc(response.data ?? []);
     } catch (error) {
       console.log(error);

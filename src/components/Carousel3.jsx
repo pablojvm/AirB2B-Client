@@ -38,8 +38,8 @@ function Carousel3() {
   const maxStart = Math.max(0, totalItems - pageSize);
   const visible = acc.slice(startIndex, startIndex + pageSize);
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1)); // mover 1 hacia atrás
-  const handleNext = () => setStartIndex((prev) => Math.min(maxStart, prev + 1)); // mover 1 hacia adelante
+  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1)); 
+  const handleNext = () => setStartIndex((prev) => Math.min(maxStart, prev + 1));
 
   return (
     <Container className="mt-4">
@@ -52,13 +52,11 @@ function Carousel3() {
         }}
       >
         <h2>Alojamientos en {city || "..."}</h2>
-
         <Pagination className="m-0">
           <Pagination.Prev onClick={handlePrev} disabled={startIndex === 0} />
           <Pagination.Next onClick={handleNext} disabled={startIndex >= maxStart} />
         </Pagination>
       </div>
-
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
           <Spinner animation="border" role="status" />

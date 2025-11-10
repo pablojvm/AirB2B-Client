@@ -83,7 +83,6 @@ function MyReviewsPage() {
                   >
                     Eliminar
                   </Button>
-                  {/* Aquí podrías agregar un botón de editar */}
                 </div>
               </Card.Body>
             </Card>

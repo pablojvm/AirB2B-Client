@@ -26,13 +26,12 @@ export default function PaymentSuccess() {
   const location = useLocation();
 
   const [isFetching, setIsFetching] = useState(true);
-  const [payment, setPayment] = useState(null); // payment doc from backend
-  const [booking, setBooking] = useState(null); // booking info if backend returns it
+  const [payment, setPayment] = useState(null);
+  const [booking, setBooking] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     handleUseEffect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUseEffect = async () => {
@@ -51,19 +50,13 @@ export default function PaymentSuccess() {
     };
 
     try {
-      // Llamada para que tu backend actualice el estado del PaymentIntent y devuelva info
       const res = await service.patch("/payment/update-payment-intent", paymentIntentInfo);
-      // Intentamos leer datos útiles (adaptable a la estructura que devuelva tu backend)
       const data = res.data || {};
-
-      // Si tu endpoint devuelve payment y booking, adaptamos; si no, guardamos lo que venga
-      setPayment(data.payment ?? data);
+      setPayment(data.payment);
       if (data.booking) setBooking(data.booking);
-      // Si no devuelve booking pero sí product id, podrías hacer otra llamada para obtenerlo
       setIsFetching(false);
     } catch (err) {
       console.error("Error actualizando payment:", err);
-      // Intentamos una segunda estrategia: pedir estado del payment por paymentIntentId
       try {
         const res2 = await service.get(`/payment/by-intent/${paymentIntentId}`);
         setPayment(res2.data);
@@ -87,10 +80,9 @@ export default function PaymentSuccess() {
     );
   }
 
-  // Datos fallback si backend no devuelve detalle de booking
-  const fallbackTitle = booking?.title ?? payment?.product?.title ?? "Reserva confirmada";
-  const fallbackHost = booking?.owner?.username ?? payment?.product?.owner?.username ?? "Anfitrión";
-  const price = (payment?.price ?? booking?.price ?? payment?.amount ?? 0);
+  const fallbackTitle = booking.accommodation.title ?? "Reserva confirmada";
+  const fallbackHost = booking.accommodation.owner?.username ?? payment?.product?.owner?.username ?? "Anfitrión";
+  const price = booking.cost;
   const currency = "EUR";
 
   return (
@@ -133,7 +125,7 @@ export default function PaymentSuccess() {
                   <div style={{ display: "flex", gap: 12, marginTop: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 140, height: 100, borderRadius: 12, overflow: "hidden", background: "#f3f3f3" }}>
                       <img
-                        src={booking?.photos?.[0] ?? payment?.product?.photo ?? "/imagenpre.webp"}
+                        src={booking.accommodation.photos[0]}
                         alt="foto alojamiento"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
@@ -144,7 +136,7 @@ export default function PaymentSuccess() {
                       <h6 style={{ margin: 0 }}>{fallbackTitle}</h6>
                       <div style={{ marginTop: 8 }}>
                         <small style={{ color: "#666" }}>
-                          {booking?.city ?? payment?.product?.city ?? ""}
+                          {booking.accommodation.city}
                         </small>
                       </div>
                     </div>
@@ -154,7 +146,7 @@ export default function PaymentSuccess() {
 
                   <h6>Información</h6>
                   <div style={{ marginTop: 8 }}>
-                    <SmallDetail label="Pago" value={formatCurrency(price, currency)} />
+                    <SmallDetail label="Pago" value={formatCurrency(booking.cost, currency)} />
                     <SmallDetail label="Estado del pago" value={payment?.status ?? "unknown"} />
                     <SmallDetail label="ID pago (Stripe)" value={payment?.paymentIntentId ?? "—"} />
                     <SmallDetail label="ID interno" value={payment?._id ?? "—"} />
@@ -164,7 +156,7 @@ export default function PaymentSuccess() {
 
                   <h6>Qué esperar ahora</h6>
                   <p style={{ color: "#666" }}>
-                    Has recibido un correo con la confirmación (si tu backend lo envía). La reserva
+                    Has recibido un correo con la confirmación. La reserva
                     aparecerá en <Link to="/myBookings">Mis reservas</Link>. Si necesitas factura o comprobante, contacta con el anfitrión.
                   </p>
                 </>
@@ -189,7 +181,7 @@ export default function PaymentSuccess() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <div style={{ fontSize: 14, color: "#666" }}>Total</div>
-                    <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(price, currency)}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(booking.cost, currency)}</div>
                   </div>
                   <Badge bg="light" text="dark" style={{ borderRadius: 8 }}>
                     {payment?.status === "succeeded" ? "Pagado" : "Pendiente"}
@@ -200,7 +192,6 @@ export default function PaymentSuccess() {
 
                 <div>
                   <SmallDetail label="Precio" value={formatCurrency(price, currency)} />
-                  <SmallDetail label="Comisión" value={formatCurrency((price * 0.05).toFixed(2), currency)} />
                   <SmallDetail label="Total" value={formatCurrency(price, currency)} />
                 </div>
 

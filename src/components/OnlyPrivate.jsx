@@ -9,13 +9,11 @@ function OnlyPrivate({ children }) {
     if (!isLoggedIn) {
       openLoginModal();
     }
-    // Nota: no cerramos el modal desde aquí; lo cierra ModalLogin al hacer login
   }, [isLoggedIn, openLoginModal]);
 
   if (isLoggedIn) {
     return children;
   } else {
-    // Devolvemos null porque el modal abre por efecto secundario
     return null;
   }
 }

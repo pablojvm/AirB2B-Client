@@ -6,17 +6,13 @@ import service from "../services/service.config";
 
 function safeFormatLocation(loc) {
   if (!loc) return "—";
-  // Si viene como string
   if (typeof loc === "string") return loc;
-  // Si es GeoJSON { type: "Point", coordinates: [lng, lat] }
   if (typeof loc === "object") {
     if (Array.isArray(loc.coordinates)) {
-      return `Coordenadas: ${loc.coordinates[1].toFixed(5)}, ${loc.coordinates[0].toFixed(5)}`; // lat,lng
+      return `Coordenadas: ${loc.coordinates[1].toFixed(5)}, ${loc.coordinates[0].toFixed(5)}`;
     }
-    // Si tiene campos más útiles:
     if (loc.address) return loc.address;
     if (loc.city) return loc.city;
-    // fallback a stringify pequeño
     try {
       return JSON.stringify(loc);
     } catch {
@@ -28,9 +24,7 @@ function safeFormatLocation(loc) {
 
 function getPhotoUrl(photo) {
   if (!photo) return "/placeholder.png";
-  // Si la foto es un string (URL)
   if (typeof photo === "string") return photo;
-  // Si la foto es un objeto con url o src
   if (typeof photo === "object") {
     return photo.url || photo.src || photo.path || "/placeholder.png";
   }
@@ -51,15 +45,13 @@ export default function PaymentPage() {
 
   useEffect(() => {
     getDetails();
-    // eslint-disable-next-line
   }, []);
 
   const getDetails = async () => {
     try {
       const response = await service.get(`/booking/${bookingId}`);
-      // revisa la respuesta por si viene anidada
       const booking = response.data?.booking ?? response.data;
-      console.log("Booking recibido:", booking); // <--- mira aquí en la consola qué estructura tiene
+      console.log("Booking recibido:", booking); 
       setProductDetails(booking);
     } catch (error) {
       console.error("Error al obtener los detalles de la reserva:", error);
@@ -84,7 +76,6 @@ export default function PaymentPage() {
     );
   }
 
-  // Normalizar campos que pueden venir con distintos nombres/estructuras
   const accommodation = productDetails.accommodation ?? productDetails.acc ?? productDetails.property ?? {};
   const startRaw = productDetails.start ?? productDetails.checkIn ?? productDetails.from;
   const endRaw = productDetails.end ?? productDetails.checkOut ?? productDetails.to;
@@ -103,7 +94,6 @@ export default function PaymentPage() {
           <h2 className="mb-4 text-center fw-bold">Finaliza tu reserva</h2>
 
           <Row className="g-4">
-            {/* --- Columna izquierda: resumen --- */}
             <Col md={6}>
               <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
                 <div style={{ width: "100%", height: 200, overflow: "hidden" }}>
@@ -126,8 +116,6 @@ export default function PaymentPage() {
                 </Card.Body>
               </Card>
             </Col>
-
-            {/* --- Columna derecha: pago --- */}
             <Col md={6}>
               <Card className="border-0 shadow-sm rounded-4 p-4">
                 <h5 className="fw-semibold mb-3 text-center">Método de pago</h5>
@@ -140,7 +128,6 @@ export default function PaymentPage() {
                   </div>
                 ) : (
                   <PaymentIntent productDetails={{
-                    // pasar al PaymentIntent solo lo que necesita: price, product id, buyer id...
                     price: totalPrice,
                     product: productDetails._id ?? bookingId,
                     buyer: productDetails.buyer ?? productDetails.user ?? productDetails.userId

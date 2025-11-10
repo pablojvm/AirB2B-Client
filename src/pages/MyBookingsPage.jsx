@@ -5,8 +5,8 @@ import { AuthContext } from "../context/auth.context";
 import service from "../services/service.config";
 
 function MyBookingsPage() {
-  const [houses, setHouses] = useState([]); // pending bookings
-  const [lastHouses, setLastHouses] = useState([]); // past bookings
+  const [houses, setHouses] = useState([]);
+  const [lastHouses, setLastHouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { authenticateUser } = useContext(AuthContext);

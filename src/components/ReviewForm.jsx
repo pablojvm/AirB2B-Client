@@ -31,7 +31,7 @@ function ReviewForm({ accommodationId, onNewReview }) {
         creator: loggedUserId,
         accommodation: accommodationId
       });
-      onNewReview(response.data); // enviar la nueva reseña al componente padre
+      onNewReview(response.data);
       setTitle("");
       setText("");
       setStars(5);

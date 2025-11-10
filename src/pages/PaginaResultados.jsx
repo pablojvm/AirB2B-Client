@@ -1,6 +1,5 @@
-// src/pages/SearchResults.jsx
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import queryString from "query-string";
 import service from "../services/service.config";
 import { Container, Row, Col, Card, Spinner } from "react-bootstrap";

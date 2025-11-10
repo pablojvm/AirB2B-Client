@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 function EditProfilePage() {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null); // referencia al input oculto
+  const fileInputRef = useRef(null);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -133,8 +133,6 @@ function EditProfilePage() {
             {initial}
           </div>
         )}
-
-        {/* Input oculto */}
         <input
           ref={fileInputRef}
           type="file"
@@ -144,8 +142,6 @@ function EditProfilePage() {
           onChange={handleFileUpload}
           disabled={isUploading}
         />
-
-        {/* Botón que abre el selector */}
         <Button
           variant="light"
           onClick={handleChooseFile}
@@ -169,7 +165,6 @@ function EditProfilePage() {
           )}
         </Button>
       </div>
-
       <div style={{ maxWidth: 500 }}>
         <h1 style={{ marginBottom: 12 }}>Mi Perfil</h1>
         <p style={{ color: "#555", fontSize: "1rem", lineHeight: "1.5" }}>
@@ -177,7 +172,6 @@ function EditProfilePage() {
           fomentar la confianza dentro de nuestra comunidad. Podrán consultarlo
           tanto los anfitriones como los viajeros.
         </p>
-
         <h3 style={{ marginTop: 8 }}>{profile?.username ?? "Usuario"}</h3>
         <p style={{ color: "#666" }}>{profile?.email}</p>
       </div>

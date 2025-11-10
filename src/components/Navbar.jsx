@@ -42,7 +42,6 @@ function NavBar() {
   const goSearch = (city) => {
     const cityTrimmed = (city || query || "").trim();
     if (!cityTrimmed) return;
-    // navegar a la página de resultados, con la ciudad en la query string
     navigate(`/search?city=${encodeURIComponent(cityTrimmed)}`);
   };
 

@@ -6,7 +6,7 @@ import { AuthContext } from "../context/auth.context";
 
 function Carousel4() {
   const navigate = useNavigate();
-  const { isLoggedIn } = useContext(AuthContext); // 👈 Saber si está logueado
+  const { isLoggedIn } = useContext(AuthContext);
 
   const [acc, setAcc] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,15 +36,14 @@ function Carousel4() {
     }
   };
 
-  // Si no está logueado, no renderizamos nada
   if (!isLoggedIn) return null;
 
   const totalItems = acc.length;
   const maxStart = Math.max(0, totalItems - pageSize);
   const visible = acc.slice(startIndex, startIndex + pageSize);
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1)); // mover 1 hacia atrás
-  const handleNext = () => setStartIndex((prev) => Math.min(maxStart, prev + 1)); // mover 1 hacia adelante
+  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1))
+  const handleNext = () => setStartIndex((prev) => Math.min(maxStart, prev + 1)); 
 
   return (
     <Container className="mt-4">
@@ -57,7 +56,6 @@ function Carousel4() {
         }}
       >
         <h2>Tus favoritos</h2>
-
         <Pagination className="m-0">
           <Pagination.Prev onClick={handlePrev} disabled={startIndex === 0} />
           <Pagination.Next onClick={handleNext} disabled={startIndex >= maxStart} />
@@ -94,7 +92,6 @@ function Carousel4() {
                     width: "100%",
                   }}
                 />
-
                 <Card.Body className="text-center d-flex flex-column">
                   <div style={{ flex: 1 }}>
                     <Card.Title style={{ fontSize: "1rem" }}>{eachAcc.title}</Card.Title>
