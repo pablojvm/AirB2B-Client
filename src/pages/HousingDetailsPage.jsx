@@ -15,7 +15,7 @@ function HousingDetailsPage() {
   const [fav, setFav] = useState([]);
   const [isFav, setIsFav] = useState(false);
   const [reviews, setReviews] = useState([]);
-  const [stars, setStars] = useState(0)
+  const [stars, setStars] = useState(0);
   const [showForm, setShowForm] = useState(false);
 
   const imagesServices = {
@@ -125,17 +125,16 @@ function HousingDetailsPage() {
     }
   };
 
- useEffect(() => {
-  if (!params.accommodationId) return;
-  service
-    .get(`/review/${params.accommodationId}`)
-    .then((res) => {
-      setReviews(res.data.reviews);
-      setStars(res.data.avgStars);
-    })
-    .catch((err) => console.log("Error al cargar reseñas:", err));
-}, [params.accommodationId]);
-
+  useEffect(() => {
+    if (!params.accommodationId) return;
+    service
+      .get(`/review/${params.accommodationId}`)
+      .then((res) => {
+        setReviews(res.data.reviews);
+        setStars(res.data.avgStars);
+      })
+      .catch((err) => console.log("Error al cargar reseñas:", err));
+  }, [params.accommodationId]);
 
   const handleNewReview = (review) => {
     setReviews((prev) => [review, ...prev]);
@@ -162,16 +161,11 @@ function HousingDetailsPage() {
 
   return (
     <Container className="mt-4">
-      <Row className="align-items-center mb-3">
+      <Row className="align-items-center mb-4">
         <Col xs={12} md={9}>
-          <h3>{acc.title}</h3>
-          <div style={{ color: "#777" }}>
-            <small>
-              {acc.type} · {acc.city}
-            </small>
-          </div>
+          <h2 style={{ fontWeight: 700 }}>{acc.title}</h2>
         </Col>
-        <Col xs={12} md={3} className="text-md-end mt-2 mt-md-0">
+        <Col xs={12} md={3} className="text-md-end mt-3 mt-md-0">
           <Button
             variant="link"
             onClick={handleToggleFav}
@@ -228,7 +222,17 @@ function HousingDetailsPage() {
             style={{ display: "flex", flexDirection: "column" }}
           >
             <Col xs={12} md={8}>
-              <h5>Descripción</h5>
+              <h5>
+                {acc.type} in {acc.city}, España
+              </h5>
+              <div>
+                <div style={{ marginBottom: 8 }}>
+                  <strong>
+                    {acc.bedrooms} dormitorios · {acc.beds} camas ·{" "}
+                    {acc.bathrooms} baños
+                  </strong>
+                </div>
+              </div>
               <p style={{ whiteSpace: "pre-wrap" }}>{acc.description}</p>
             </Col>
             <Col xs={12} md={4}>
@@ -265,29 +269,19 @@ function HousingDetailsPage() {
                   </div>
                 )}
                 <div>
-                  <div style={{ fontWeight: 600 }}>{acc.owner?.username}</div>
-                  <small style={{ color: "#666" }}>Anfitrión</small>
+                  <div style={{ fontWeight: 600 }}>
+                    <h6>Anfitrion: {acc.owner?.username}</h6>
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <div style={{ marginBottom: 8 }}>
-                  <strong>
-                    {acc.bedrooms} dormitorios · {acc.beds} camas ·{" "}
-                    {acc.bathrooms} baños
-                  </strong>
-                </div>
-                <Badge bg="warning" text="dark">
-                  ☆ {stars ?? "—"}
-                </Badge>
               </div>
             </Col>
           </Row>
-
           <Row className="mb-4">
             <Col>
-              <h4>¿Que ofrece este alojamiento?</h4>
-              <div className="d-flex flex-wrap gap-3">
+              <h4 style={{ marginBottom: 16 }}>
+                ¿Qué ofrece este alojamiento?
+              </h4>
+              <div className="d-flex flex-wrap gap-2">
                 {(acc.services ?? []).length === 0 && (
                   <small>No hay servicios listados.</small>
                 )}
@@ -297,10 +291,11 @@ function HousingDetailsPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
-                      padding: "6px 10px",
-                      borderRadius: 12,
-                      background: "#f7f7f7",
+                      gap: 6,
+                      padding: "6px 12px",
+                      borderRadius: 20,
+                      background: "#f0f0f0",
+                      fontSize: "0.9rem",
                     }}
                     title={s}
                   >
@@ -308,26 +303,25 @@ function HousingDetailsPage() {
                       <img
                         src={imagesServices[s]}
                         alt={s}
-                        style={{ width: 36, height: 36, objectFit: "contain" }}
+                        style={{ width: 28, height: 28, objectFit: "contain" }}
                       />
                     ) : (
                       <div
                         style={{
-                          width: 36,
-                          height: 36,
+                          width: 28,
+                          height: 28,
                           borderRadius: "50%",
-                          backgroundColor: "#000",
+                          backgroundColor: "#999",
                           color: "#fff",
-                          fontSize: "16px",
-                          lineHeight: "36px",
+                          fontSize: 14,
+                          lineHeight: "28px",
                           textAlign: "center",
                         }}
-                        aria-hidden
                       >
                         ?
                       </div>
                     )}
-                    <small style={{ fontWeight: 600 }}>{s}</small>
+                    <span style={{ fontWeight: 500 }}>{s}</span>
                   </div>
                 ))}
               </div>
@@ -335,53 +329,97 @@ function HousingDetailsPage() {
           </Row>
         </div>
 
-        <div style={{ width: 320 }}>
+        <div
+          className="p-3"
+          style={{
+            border: "1px solid #e6e6e6",
+            borderRadius: 16,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+          }}
+        >
           <BookingCard accommodation={acc} onBooked={(r) => console.log(r)} />
         </div>
       </div>
+      <hr
+        style={{ width: "70%", margin: "20px auto", border: "1px solid #ccc" }}
+      />
+      <div style={{ textAlign: "center", margin: "20px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "15px",
+            marginBottom: "15px",
+          }}
+        >
+          <img src="/laurel1.png" width="80px" alt="Laurel 1" />
+          <strong style={{ fontSize: "2.5rem", color: "#ffb400" }}>
+            {stars}
+          </strong>
+          <img src="/laurel2.png" width="80px" alt="Laurel 2" />
+        </div>
 
-      <div className="mt-4">
-        <h2>Reseñas</h2>
-
-        {loggedUserId ? (
-          <div className="mb-3">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowForm((prev) => !prev)}
-            >
-              {showForm ? "Cerrar formulario" : "Escribir reseña"}
-            </button>
+        {stars > 4.8 ? (
+          <div>
+            <h4>Recomendación del viajero</h4>
+            <p>
+              Este es uno de los Airbnb favoritos de los viajeros, según sus
+              valoraciones.
+            </p>
           </div>
         ) : (
-          <p>Inicia sesión para escribir una reseña</p>
+          <div>
+            <h4>Valoración en progreso</h4>
+            <p>
+              Este alojamiento está en camino de convertirse en favorito según
+              las valoraciones de los viajeros.
+            </p>
+          </div>
         )}
-
-        {showForm && (
-          <ReviewForm
-            accommodationId={params.accommodationId}
-            onNewReview={handleNewReview}
-          />
-        )}
-
-        {reviews.length === 0 ? (
-    <p className="text-muted fst-italic mt-3">
-      Aún no hay reseñas para este alojamiento. ¡Sé el primero en opinar! 💬
-    </p>
-  ) : (
-    reviews.map((r) => (
-      <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
-        <strong>
-          {r.creator && typeof r.creator === "object"
-            ? r.creator.username
-            : r.creator || "Usuario"}
-        </strong>{" "}
-        - {r.stars} ⭐
-        <h6 className="mt-2 mb-1">{r.title}</h6>
-        <p className="mb-0">{r.text}</p>
       </div>
-    ))
-  )}
-      </div>
+
+      <div className="mt-4">
+      <h2>Reseñas</h2>
+      {loggedUserId ? (
+        <div className="mb-3">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowForm((prev) => !prev)}
+          >
+            {showForm ? "Cerrar formulario" : "Escribir reseña"}
+          </button>
+        </div>
+      ) : (
+        <p>Inicia sesión para escribir una reseña</p>
+      )}
+
+      {showForm && (
+        <ReviewForm
+          accommodationId={params.accommodationId}
+          onNewReview={handleNewReview}
+        />
+      )}
+
+      {reviews.length === 0 ? (
+        <p className="text-muted fst-italic mt-3">
+          Aún no hay reseñas para este alojamiento. ¡Sé el primero en opinar! 💬
+        </p>
+      ) : (
+        reviews.map((r) => (
+          <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
+            <strong>
+              {r.creator && typeof r.creator === "object"
+                ? r.creator.username
+                : r.creator || "Usuario"}
+            </strong>{" "}
+            - {r.stars} ⭐
+            <h6 className="mt-2 mb-1">{r.title}</h6>
+            <p className="mb-0">{r.text}</p>
+          </div>
+        ))
+      )}
+    </div>
     </Container>
   );
 }
