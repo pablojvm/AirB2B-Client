@@ -35,11 +35,14 @@ function PaginaResultados() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
+        // Trae alojamientos con estrellas promedio
         const res = await service.get(
-          `/accommodation?city=${encodeURIComponent(city)}`
+          `/accommodation/with-reviews?city=${encodeURIComponent(city)}`
         );
         setResults(res.data || []);
+        console.log(res.data)
 
+        // Obtiene coordenadas de la ciudad para centrar el mapa
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             city + ", Spain"
@@ -74,33 +77,45 @@ function PaginaResultados() {
         Resultados para: <strong>{city}</strong>
       </h3>
       {error && <div className="alert alert-danger">{error}</div>}
+
       <div style={{ height: 400, marginBottom: 20 }}>
-        <MapContainer center={cityCoords} zoom={12} style={{ height: "100%", width: "100%" }}>
+        <MapContainer
+          center={cityCoords}
+          zoom={12}
+          style={{ height: "100%", width: "100%" }}
+        >
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {results.map((acc) => (
-            acc.location?.coordinates && (
-              <Marker
-                key={acc._id}
-                position={[acc.location.coordinates[1], acc.location.coordinates[0]]}
-                icon={customMarker}
-              >
-                <Popup>
-                  <strong>{acc.title}</strong>
-                  <br />
-                  {acc.city} · ☆ {acc.stars ?? "—"}
-                  <br />
-                  <Link to={`/housingdetails/${acc._id}`}>Ver detalles</Link>
-                </Popup>
-              </Marker>
-            )
-          ))}
+          {results.map(
+            (acc) =>
+              acc.location?.coordinates && (
+                <Marker
+                  key={acc._id}
+                  position={[
+                    acc.location.coordinates[1],
+                    acc.location.coordinates[0],
+                  ]}
+                  icon={customMarker}
+                >
+                  <Popup>
+                    <strong>{acc.title}</strong>
+                    <br />
+                    {acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"}
+                    <br />
+                    <Link to={`/housingdetails/${acc._id}`}>Ver detalles</Link>
+                  </Popup>
+                </Marker>
+              )
+          )}
         </MapContainer>
       </div>
+
       {results.length === 0 ? (
-        <p className="text-muted">No se han encontrado alojamientos en {city}.</p>
+        <p className="text-muted">
+          No se han encontrado alojamientos en {city}.
+        </p>
       ) : (
         <Row className="g-3 mt-3">
           {results.map((acc) => (
@@ -114,13 +129,17 @@ function PaginaResultados() {
                 <div style={{ height: 160, overflow: "hidden" }}>
                   <Card.Img
                     src={acc.photos?.[0] ?? "/imagenpre.webp"}
-                    style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                    style={{
+                      objectFit: "cover",
+                      width: "100%",
+                      height: "100%",
+                    }}
                   />
                 </div>
                 <Card.Body>
                   <Card.Title style={{ fontSize: 16 }}>{acc.title}</Card.Title>
                   <Card.Text className="text-muted">
-                    {acc.city} · ☆ {acc.stars ?? "—"}
+                    {acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"}
                   </Card.Text>
                 </Card.Body>
               </Card>
