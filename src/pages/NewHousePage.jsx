@@ -7,11 +7,12 @@ import {
   Alert,
   ProgressBar,
 } from "react-bootstrap";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import { useState } from "react";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { useState, useEffect, useRef } from "react";
 import ClickMarker from "../components/ClickMarker";
 import service from "../services/service.config";
 import { useNavigate } from "react-router-dom";
+import L from "leaflet";
 
 function NewHousePage() {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ function NewHousePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 9;
 
-  const [center] = useState([40.4169, -3.7034]);
+  const [mapPosition, setMapPosition] = useState([40.4169, -3.7034]);
+  const [cityCoords, setCityCoords] = useState(null);
   const [clickedPosition, setClickedPosition] = useState(null);
   const [value1, setValue1] = useState(1);
   const [value2, setValue2] = useState(1);
@@ -37,6 +39,7 @@ function NewHousePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+  const mapRef = useRef(null);
 
   const handleIncrease1 = () => setValue1((v) => v + 1);
   const handleDecrease1 = () => setValue1((v) => (v > 0 ? v - 1 : 0));
@@ -192,6 +195,43 @@ function NewHousePage() {
     }
   };
 
+  function RecenterMap({ lat, lng }) {
+    const map = useMap();
+    useEffect(() => {
+      if (lat && lng) {
+        map.setView([lat, lng], 12);
+      }
+    }, [lat, lng, map]);
+    return null;
+  }
+
+  const handleCitySearch = async () => {
+    if (!city) return;
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          city + ", Spain"
+        )}`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setCityCoords([parseFloat(lat), parseFloat(lon)]);
+      } else {
+        alert("Ciudad no encontrada");
+      }
+    } catch (error) {
+      console.error("Error buscando ciudad:", error);
+    }
+  };
+
+  const customMarker = L.icon({
+    iconUrl: "/marker.png",
+    iconSize: [60, 95],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
+
   const goNext = () => {
     setSubmitError("");
     if (currentStep < totalSteps) setCurrentStep((s) => s + 1);
@@ -211,66 +251,117 @@ function NewHousePage() {
         <div style={{ padding: "20px 40px" }}>
           <ProgressBar now={progress} label={`${currentStep}/${totalSteps}`} />
         </div>
+
         {currentStep === 1 && (
-          <section id="firstPage" style={{ padding: "20px 40px" }}>
+          <section
+            id="firstPage"
+            style={{
+              padding: "20px 40px",
+            }}
+          >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-around",
                 padding: "40px",
+                flexWrap: "wrap",
               }}
             >
-              <div>
-                <h1>Empezar en AirB2B es muy sencillo</h1>
+              <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                <h1
+                  style={{
+                    fontSize: "2rem",
+                    marginBottom: "10px",
+                  }}
+                >
+                  Empezar en AirB2B es muy sencillo
+                </h1>
               </div>
+
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   gap: "20px",
+                  maxWidth: "800px",
+                  width: "100%",
                 }}
               >
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <div>
-                    <h3>1. Describe tu espacio</h3>
-                    <p>
-                      Añade algunos datos básicos, como dónde está y cuántos
-                      viajeros pueden quedarse.
-                    </p>
+                {[
+                  {
+                    title: "1. Describe tu espacio",
+                    text: "Añade algunos datos básicos, como dónde está y cuántos viajeros pueden quedarse.",
+                    img: "/foto3.png",
+                  },
+                  {
+                    title: "2. Añade todos los detalles",
+                    text: "Añade al menos cinco fotos, un título y una descripción. Te echaremos una mano.",
+                    img: "/foto2.png",
+                  },
+                  {
+                    title: "3. Últimos retoques y publícalo",
+                    text: "Elige un precio inicial, verifica algunos detalles y publica tu anuncio.",
+                    img: "/foto1.png",
+                  },
+                ].map((step, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "15px",
+                    }}
+                  >
+                    <div style={{ flex: "1 1 300px", minWidth: "250px" }}>
+                      <h3 style={{ marginBottom: "5px" }}>{step.title}</h3>
+                      <p style={{ margin: 0 }}>{step.text}</p>
+                    </div>
+                    <img
+                      src={step.img}
+                      width="200px"
+                      alt={`Paso ${index + 1}`}
+                      style={{
+                        flex: "0 0 auto",
+                        maxWidth: "100%",
+                        height: "auto",
+                      }}
+                    />
                   </div>
-                  <img src="/foto3.png" width="200px" alt="Paso 1" />
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <div>
-                    <h3>2. Añade todos los detalles</h3>
-                    <p>
-                      Añade al menos cinco fotos, un título y una descripción.
-                      Te echaremos una mano.
-                    </p>
-                  </div>
-                  <img src="/foto2.png" width="200px" alt="Paso 2" />
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <div>
-                    <h3>3. Últimos retoques y publícalo</h3>
-                    <p>
-                      Elige un precio inicial, verifica algunos detalles y
-                      publica tu anuncio.
-                    </p>
-                  </div>
-                  <img src="/foto1.png" width="200px" alt="Paso 3" />
-                </div>
+                ))}
               </div>
             </div>
+
+            <style>
+              {`
+        @media (max-width: 768px) {
+          #firstPage {
+            padding: 10px 20px !important;
+          }
+
+          #firstPage h1 {
+            font-size: 1.5rem !important;
+            margin-bottom: 5px !important;
+          }
+
+          #firstPage div[style*="justify-content: space-between"] {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+          }
+
+          #firstPage img {
+            width: 150px !important;
+            margin-top: 10px !important;
+          }
+        }
+      `}
+            </style>
           </section>
         )}
+
         {currentStep === 2 && (
           <section id="secondPage" style={{ padding: "20px 40px" }}>
             <h1>¿Cuál de estas opciones describe mejor tu alojamiento?</h1>
@@ -313,6 +404,7 @@ function NewHousePage() {
         {currentStep === 3 && (
           <section id="thirdPage" style={{ padding: "20px 40px" }}>
             <h1>¿Dónde se encuentra tu alojamiento?</h1>
+
             <Form.Group className="mb-3" controlId="Adress">
               <Form.Label>Introduce tu dirección exacta</Form.Label>
               <Form.Control
@@ -321,37 +413,52 @@ function NewHousePage() {
                 placeholder="Dirección"
               />
             </Form.Group>
+
             <Form.Group className="mb-3" controlId="City">
               <Form.Label>Ciudad</Form.Label>
-              <Form.Control
-                value={city}
-                onChange={(e) =>
-                  setCity(
-                    e.target.value.charAt(0).toUpperCase() +
-                      e.target.value.slice(1)
-                  )
-                }
-                placeholder="Ciudad"
-              />
-              <Form.Text className="text-muted">
-                La primera letra se escribirá automáticamente en mayúscula.
-              </Form.Text>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Form.Control
+                  value={city}
+                  onChange={(e) =>
+                    setCity(
+                      e.target.value.charAt(0).toUpperCase() +
+                        e.target.value.slice(1)
+                    )
+                  }
+                  placeholder="Ciudad"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCitySearch();
+                    }
+                  }}
+                />
+                <Button variant="secondary" onClick={handleCitySearch}>
+                  Buscar ciudad
+                </Button>
+              </div>
             </Form.Group>
+
             <MapContainer
-              center={center}
-              zoom={13}
+              center={mapPosition}
+              zoom={6}
               scrollWheelZoom={false}
               style={{ height: "300px", width: "100%" }}
+              ref={mapRef}
             >
               <TileLayer
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <ClickMarker setClickedPosition={setClickedPosition} />
-              {clickedPosition !== null && (
-                <Marker position={clickedPosition} />
+              {clickedPosition && (
+                <Marker position={clickedPosition} icon={customMarker} />
+              )}
+              {cityCoords && (
+                <RecenterMap lat={cityCoords[0]} lng={cityCoords[1]} />
               )}
             </MapContainer>
+
             <small className="text-muted">
               Haz click en el mapa para fijar la localización exacta.
             </small>
@@ -610,7 +717,14 @@ function NewHousePage() {
                 marginTop: "1rem",
               }}
             >
-              <InputGroup style={{ width: "12ch", justifyContent: "center", border:"2px solid black", borderRadius:"20px" }}>
+              <InputGroup
+                style={{
+                  width: "12ch",
+                  justifyContent: "center",
+                  border: "2px solid black",
+                  borderRadius: "20px",
+                }}
+              >
                 <InputGroup.Text
                   style={{
                     fontSize: "2.2rem",
@@ -637,7 +751,6 @@ function NewHousePage() {
             </div>
           </section>
         )}
-
         <div style={{ padding: "20px 40px" }}>
           {submitError && <Alert variant="danger">{submitError}</Alert>}
           {submitSuccess && <Alert variant="success">{submitSuccess}</Alert>}

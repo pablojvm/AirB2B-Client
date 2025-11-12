@@ -1,11 +1,10 @@
-import { useMapEvents } from "react-leaflet/hooks";
+import { useMapEvents } from "react-leaflet";
 
 function ClickMarker({ setClickedPosition }) {
   useMapEvents({
     click: (event) => {
-      console.log(event.latlng);
-      const obj = event.latlng;
-      setClickedPosition([obj.lat.toFixed(5), obj.lng.toFixed(5)]);
+      const { lat, lng } = event.latlng;
+      setClickedPosition([parseFloat(lat.toFixed(5)), parseFloat(lng.toFixed(5))]);
     },
   });
   return null;

@@ -1,7 +1,4 @@
 @media (max-width: 375px) {
-    #logo{
-        display: none;
-    }
     #navbar {
         display: flex;
         justify-content: center;
@@ -12,4 +9,118 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* CSS (ponlo en tu hoja de estilos) */
+.first-page {
+  padding: 20px 40px;
+  box-sizing: border-box;
+}
+
+/* Flex: texto a la izquierda, pasos a la derecha en desktop */
+.intro-and-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40px;
+  gap: 32px;
+}
+
+/* Intro (columna izquierda) */
+.intro {
+  flex: 1 1 320px;
+  min-width: 220px;
+}
+
+/* Steps (columna derecha) - los pasos en columna */
+.steps {
+  flex: 1 1 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cada paso: texto y imagen alineados horizontalmente en desktop */
+.step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Texto del paso */
+.step-text {
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+
+/* Imagen del paso: tamaño fijo en desktop pero responsiva */
+.step-img img {
+  width: 200px;
+  max-width: 40%;
+  height: auto;
+  display: block;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* ====== MOBILE ====== */
+/* En pantallas pequeñas apilamos todo verticalmente:
+   - .intro-and-steps => columna
+   - cada .step => columna (texto arriba, imagen debajo)
+   - imágenes se hacen full-width con un max-width razonable
+*/
+@media (max-width: 991.98px) {
+  .first-page {
+    padding: 16px;
+  }
+
+  .intro-and-steps {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 0;
+  }
+
+  .intro {
+    order: 1;
+    margin-bottom: 12px;
+  }
+
+  .steps {
+    order: 2;
+  }
+
+  .step {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+
+  .step:first-of-type {
+    border-top: none;
+  }
+
+  .step-img img {
+    width: 100%;
+    max-width: 420px; /* evita que la imagen sea gigantesca en pantallas medianas */
+    align-self: center;
+  }
+}
+
+/* Opcional: ajustes finos para pantallas muy pequeñas */
+@media (max-width: 575.98px) {
+  .intro-and-steps {
+    padding: 12px 0;
+  }
+
+  .intro h1 {
+    font-size: 1.25rem;
+  }
+
+  .step-text h3 {
+    font-size: 1rem;
+  }
 }
