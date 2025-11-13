@@ -112,7 +112,7 @@ function Carousel1({ setShowLoginModal }) {
                       <img
                         src={isFavItem ? "/corazon-rojo.png" : "/corazon.png"}
                         alt="Fav"
-                        style={{ width: 40, height: 40 }}
+                        style={{ width: 40, height: 40}}
                       />
                     </Button>
                   </Card.ImgOverlay>
