@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import {
   Navbar,
   Container,
@@ -16,19 +16,35 @@ import { AuthContext } from "../context/auth.context";
 import ModalLogin from "./ModalLogin";
 import ModalLoginDone from "./ModalLoginDone";
 import ModalHost from "./ModalHost";
+import service from "../services/service.config";
 
 function NavBar() {
   const navigate = useNavigate();
-  const { isLoggedIn, authenticateUser } = useContext(AuthContext);
+  const { isLoggedIn, authenticateUser, loggedUserId } =
+    useContext(AuthContext);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showHostModal, setShowHostModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [query, setQuery] = useState("");
+  const [acc, setAcc] = useState("Hazte anfitrión");
 
   const toggleDropdown = () => setShowMenu(!showMenu);
   const closeDropdown = () => setShowMenu(false);
+
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  const getUser = async () => {
+    try {
+      const response = await service.get(`/accommodation/own`, loggedUserId);
+      setAcc(response.data);
+    } catch (error) {
+      console.error("Error al obtener el perfil del usuario:", error);
+    }
+  };
 
   const handleLogout = async () => {
     localStorage.removeItem("authToken");
@@ -61,7 +77,12 @@ function NavBar() {
             <Row className="w-100 align-items-center">
               <Col lg={3} className="d-flex align-items-center">
                 <Link to="/" className="d-flex align-items-center">
-                  <Image src="logoair.png" width={100} height="auto" alt="Logo" />
+                  <Image
+                    src="logoair.png"
+                    width={100}
+                    height="auto"
+                    alt="Logo"
+                  />
                 </Link>
               </Col>
               <Col lg={6} className="d-flex justify-content-center">
@@ -98,15 +119,33 @@ function NavBar() {
                   </InputGroup>
                 </div>
               </Col>
-              <Col lg={3} className="d-flex justify-content-end align-items-center">
-                <Button
-                  variant="light"
-                  onClick={() => setShowHostModal(true)}
-                  className="me-2"
+              <Col
+                lg={3}
+                className="d-flex justify-content-end align-items-center"
+              >
+                {acc.length == 0 ? (
+                  <Button
+                    variant="light"
+                    onClick={() => setShowHostModal(true)}
+                    className="me-2"
+                  >
+                    Hazte anfitrión
+                  </Button>
+                ) : (
+                  <Button
+                    variant="light"
+                    onClick={() => setShowHostModal(true)}
+                    className="me-2"
+                  >
+                    Sube otro alojamiento
+                  </Button>
+                )}
+
+                <Dropdown
+                  as={ButtonGroup}
+                  show={showMenu}
+                  onToggle={setShowMenu}
                 >
-                  Hazte anfitrión
-                </Button>
-                <Dropdown as={ButtonGroup} show={showMenu} onToggle={setShowMenu}>
                   <Button
                     variant="light"
                     onClick={toggleDropdown}
@@ -118,18 +157,40 @@ function NavBar() {
                   </Button>
 
                   {isLoggedIn ? (
-                    <Dropdown.Menu align="end" show={showMenu} onClick={closeDropdown}>
-                      <Dropdown.Item as={Link} to="/myHouses">Mis Alojamientos</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/favoriteshousing">Favoritos</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myBookings">Reservas</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myProfile">Perfil</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myReviews">Mis reseñas</Dropdown.Item>
+                    <Dropdown.Menu
+                      align="end"
+                      show={showMenu}
+                      onClick={closeDropdown}
+                    >
+                      <Dropdown.Item as={Link} to="/myHouses">
+                        Mis Alojamientos
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/favoriteshousing">
+                        Favoritos
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myBookings">
+                        Reservas
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myProfile">
+                        Perfil
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myReviews">
+                        Mis reseñas
+                      </Dropdown.Item>
                       <Dropdown.Divider />
-                      <Dropdown.Item onClick={handleLogout}>Cerrar Sesión</Dropdown.Item>
+                      <Dropdown.Item onClick={handleLogout}>
+                        Cerrar Sesión
+                      </Dropdown.Item>
                     </Dropdown.Menu>
                   ) : (
-                    <Dropdown.Menu align="end" show={showMenu} onClick={closeDropdown}>
-                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>Entrar o Registrarme</Dropdown.Item>
+                    <Dropdown.Menu
+                      align="end"
+                      show={showMenu}
+                      onClick={closeDropdown}
+                    >
+                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>
+                        Entrar o Registrarme
+                      </Dropdown.Item>
                     </Dropdown.Menu>
                   )}
                 </Dropdown>
@@ -151,11 +212,19 @@ function NavBar() {
                   Hazte anfitrión
                 </Button>
 
-                <Dropdown as={ButtonGroup} show={showMenu} onToggle={setShowMenu}>
+                <Dropdown
+                  as={ButtonGroup}
+                  show={showMenu}
+                  onToggle={setShowMenu}
+                >
                   <Button
                     variant="light"
                     onClick={toggleDropdown}
-                    style={{ borderColor: "black", borderRadius: "20px", padding: 6 }}
+                    style={{
+                      borderColor: "black",
+                      borderRadius: "20px",
+                      padding: 6,
+                    }}
                     aria-haspopup="menu"
                     aria-expanded={showMenu}
                   >
@@ -163,18 +232,40 @@ function NavBar() {
                   </Button>
 
                   {isLoggedIn ? (
-                    <Dropdown.Menu align="end" show={showMenu} onClick={closeDropdown}>
-                      <Dropdown.Item as={Link} to="/myHouses">Mis Alojamientos</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/favoriteshousing">Favoritos</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myBookings">Reservas</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myProfile">Perfil</Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myReviews">Mis reseñas</Dropdown.Item>
+                    <Dropdown.Menu
+                      align="end"
+                      show={showMenu}
+                      onClick={closeDropdown}
+                    >
+                      <Dropdown.Item as={Link} to="/myHouses">
+                        Mis Alojamientos
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/favoriteshousing">
+                        Favoritos
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myBookings">
+                        Reservas
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myProfile">
+                        Perfil
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/myReviews">
+                        Mis reseñas
+                      </Dropdown.Item>
                       <Dropdown.Divider />
-                      <Dropdown.Item onClick={handleLogout}>Cerrar Sesión</Dropdown.Item>
+                      <Dropdown.Item onClick={handleLogout}>
+                        Cerrar Sesión
+                      </Dropdown.Item>
                     </Dropdown.Menu>
                   ) : (
-                    <Dropdown.Menu align="end" show={showMenu} onClick={closeDropdown}>
-                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>Entrar o Registrarme</Dropdown.Item>
+                    <Dropdown.Menu
+                      align="end"
+                      show={showMenu}
+                      onClick={closeDropdown}
+                    >
+                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>
+                        Entrar o Registrarme
+                      </Dropdown.Item>
                     </Dropdown.Menu>
                   )}
                 </Dropdown>
@@ -227,7 +318,10 @@ function NavBar() {
         show={showSuccessModal}
         handleClose={() => setShowSuccessModal(false)}
       />
-      <ModalHost show={showHostModal} handleClose={() => setShowHostModal(false)} />
+      <ModalHost
+        show={showHostModal}
+        handleClose={() => setShowHostModal(false)}
+      />
     </>
   );
 }

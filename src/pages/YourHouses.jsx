@@ -28,27 +28,25 @@ function YourHouses() {
         {houses.map((eachAcc, idx) => (
           <Col key={eachAcc._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
             <Card
-              className="border-0 shadow-sm h-100"
               as={Link}
               to={`/housingdetails/${eachAcc._id}`}
               style={{
                 textDecoration: "none",
                 borderRadius: "20px",
                 overflow: "hidden",
+                position: "relative",
               }}
             >
               <Card.Img
-                src={eachAcc.photos[0]}
+                src={eachAcc.photos?.[0] || "/placeholder.png"}
                 alt="Alojamiento"
-                style={{
-                  height: "200px",
-                  objectFit: "cover",
-                }}
+                style={{ height: "200px", objectFit: "cover" }}
               />
-              <Card.Body className="text-center">
-                <Card.Title>{eachAcc.title}</Card.Title>
-              </Card.Body>
             </Card>
+            <div>
+              <h7>{eachAcc.title}</h7>
+              <p>{(eachAcc.cost ?? 0) * 2}€ por dos noches</p>
+            </div>
           </Col>
         ))}
         {houses.length === 0 && (

@@ -126,31 +126,19 @@ function MyBookingsPage() {
             return (
               <Col key={booking._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
                 <Card
-                  className="border-0 shadow-sm h-100"
                   as={Link}
                   to={`/housingdetails/${acc._id}`}
-                  style={{
-                    textDecoration: "none",
-                    borderRadius: "20px",
-                    overflow: "hidden",
-                  }}
+                  style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
                 >
                   <Card.Img
                     src={acc.photos?.[0] || "/placeholder.png"}
-                    alt={acc.title || "Alojamiento"}
-                    style={{
-                      height: "200px",
-                      objectFit: "cover",
-                      width: "100%",
-                    }}
-                    loading="lazy"
+                    alt="Alojamiento"
+                    style={{ height: "200px", objectFit: "cover" }}
                   />
-                  <Card.Body className="text-center">
-                    <Card.Title style={{ fontSize: "1rem" }}>
-                      {acc.title || "Alojamiento"}
-                    </Card.Title>
-                  </Card.Body>
                 </Card>
+                <div>
+                  <h7>{acc.title}</h7>
+                </div>
               </Col>
             );
           })}

@@ -1,14 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
 import queryString from "query-string";
 import service from "../services/service.config";
-import { Container, Row, Col, Card, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-
-function useQuery() {
-  return queryString.parse(window.location.search);
-}
 
 function PaginaResultados() {
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +12,10 @@ function PaginaResultados() {
   const [error, setError] = useState(null);
   const [cityCoords, setCityCoords] = useState([40.4169, -3.7034]);
 
-  const { city } = useQuery();
+  const location = useLocation();
+
+  // recalcula la query cada vez que cambia location.search
+  const { city } = useMemo(() => queryString.parse(location.search), [location.search]);
 
   const customMarker = L.icon({
     iconUrl: "/marker.png",
@@ -32,36 +31,47 @@ function PaginaResultados() {
       return;
     }
 
+    let mounted = true; // para evitar setState si el componente se desmonta
+
     const fetchResults = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        // Trae alojamientos con estrellas promedio
         const res = await service.get(
           `/accommodation/with-reviews?city=${encodeURIComponent(city)}`
         );
-        setResults(res.data || []);
-        console.log(res.data)
 
-        // Obtiene coordenadas de la ciudad para centrar el mapa
+        if (!mounted) return;
+        setResults(res.data || []);
+        console.log(res.data);
+
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             city + ", Spain"
           )}`
         );
         const geoData = await geoRes.json();
+        if (!mounted) return;
         if (geoData.length > 0) {
           const { lat, lon } = geoData[0];
           setCityCoords([parseFloat(lat), parseFloat(lon)]);
         }
       } catch (err) {
+        if (!mounted) return;
         console.error("Error buscando alojamientos:", err);
         setError("Error buscando alojamientos");
+        setResults([]);
       } finally {
+        if (!mounted) return;
         setIsLoading(false);
       }
     };
 
     fetchResults();
+
+    return () => {
+      mounted = false;
+    };
   }, [city]);
 
   if (isLoading)
@@ -123,26 +133,19 @@ function PaginaResultados() {
               <Card
                 as={Link}
                 to={`/housingdetails/${acc._id}`}
-                style={{ textDecoration: "none", color: "inherit" }}
-                className="h-100 shadow-sm"
+                style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
               >
-                <div style={{ height: 160, overflow: "hidden" }}>
-                  <Card.Img
-                    src={acc.photos?.[0] ?? "/imagenpre.webp"}
-                    style={{
-                      objectFit: "cover",
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  />
-                </div>
-                <Card.Body>
-                  <Card.Title style={{ fontSize: 16 }}>{acc.title}</Card.Title>
-                  <Card.Text className="text-muted">
-                    {acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"}
-                  </Card.Text>
-                </Card.Body>
+                <Card.Img
+                  src={acc.photos?.[0] || "/placeholder.png"}
+                  alt="Alojamiento"
+                  style={{ height: "200px", objectFit: "cover" }}
+                />
               </Card>
+              <div>
+                <h7>{acc.title}</h7>
+                <p>{(acc.cost ?? 0) * 2}€ por dos noches</p>
+                <p>{acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"} </p>
+              </div>
             </Col>
           ))}
         </Row>

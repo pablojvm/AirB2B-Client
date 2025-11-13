@@ -24,43 +24,102 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaginaResultados from "./pages/PaginaResultados";
 
 function App() {
-
   const [showLoginModal, setShowLoginModal] = useState(false);
-
 
   return (
     <>
-
-      <ModalLogin show={showLoginModal} handleClose={() => setShowLoginModal(false)} />
-      <NavBar/>
+      <ModalLogin
+        show={showLoginModal}
+        handleClose={() => setShowLoginModal(false)}
+      />
+      <NavBar />
 
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <Carousel1 />
-              <Carousel2 />
-              <Carousel3 />
-              <Carousel4 />
+              <Carousel1 setShowLoginModal={setShowLoginModal} />
+              <Carousel2 setShowLoginModal={setShowLoginModal} />
+              <Carousel3 setShowLoginModal={setShowLoginModal} />
+              <Carousel4 setShowLoginModal={setShowLoginModal} />
             </>
           }
         />
-        <Route path="/housingdetails/:accommodationId" element={<HousingDetailsPage />} />
-        <Route path="/search" element={<PaginaResultados/>}/>
-        <Route path="/favoriteshousing" element={<OnlyPrivate><FavoritesHousingPage/></OnlyPrivate>} />
-        <Route path="/newHouse" element={<OnlyPrivate><NewHousePage/></OnlyPrivate>}/>
-        <Route path="/myHouses" element={<OnlyPrivate><YourHouses/></OnlyPrivate>}/>
-        <Route path="/myProfile" element={<OnlyPrivate><ProfilePage/></OnlyPrivate>}/>
-        <Route path="/editProfile" element={<OnlyPrivate><EditProfilePage/></OnlyPrivate>}/>
-        <Route path="/myBookings" element={<OnlyPrivate><MyBookingsPage/></OnlyPrivate>}/>
-        <Route path="/myReviews" element={<OnlyPrivate><MyReviewsPage/></OnlyPrivate>}/>
-        <Route path="/payment/:bookingId" element={<OnlyPrivate><PaymentPage/></OnlyPrivate>}/>
+        <Route
+          path="/housingdetails/:accommodationId"
+          element={<HousingDetailsPage />}
+        />
+        <Route path="/search" element={<PaginaResultados />} />
+        <Route
+          path="/favoriteshousing"
+          element={
+            <OnlyPrivate>
+              <FavoritesHousingPage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/newHouse"
+          element={
+            <OnlyPrivate>
+              <NewHousePage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/myHouses"
+          element={
+            <OnlyPrivate>
+              <YourHouses />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/myProfile"
+          element={
+            <OnlyPrivate>
+              <ProfilePage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/editProfile"
+          element={
+            <OnlyPrivate>
+              <EditProfilePage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/myBookings"
+          element={
+            <OnlyPrivate>
+              <MyBookingsPage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/myReviews"
+          element={
+            <OnlyPrivate>
+              <MyReviewsPage />
+            </OnlyPrivate>
+          }
+        />
+        <Route
+          path="/payment/:bookingId"
+          element={
+            <OnlyPrivate>
+              <PaymentPage />
+            </OnlyPrivate>
+          }
+        />
         <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/500" element={<Page500/>}/>
+        <Route path="/500" element={<Page500 />} />
       </Routes>
 
-      <Footer/>
+      <Footer />
     </>
   );
 }

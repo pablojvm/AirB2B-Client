@@ -1,6 +1,6 @@
 import service from "../services/service.config";
 import { useEffect, useState, useContext } from "react";
-import { Button, Image, Container, Row, Col, Badge } from "react-bootstrap";
+import { Button, Image, Container, Row, Col } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import BookingCard from "../components/BookingCard";

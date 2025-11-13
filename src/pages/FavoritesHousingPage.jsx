@@ -59,29 +59,20 @@ function FavoritesHousingPage() {
             xl={2}
           >
             <Card
-              className="border-0 shadow-sm h-100"
-              as={Link}
-              to={`/housingdetails/${eachAcc._id}`}
-              style={{
-                textDecoration: "none",
-                borderRadius: "20px",
-                overflow: "hidden",
-              }}
-            >
-              <Card.Img
-                src={eachAcc.photos?.[0] || "/placeholder.png"}
-                alt={eachAcc.title || "Alojamiento"}
-                style={{
-                  height: "200px",
-                  objectFit: "cover",
-                  width: "100%",
-                }}
-                loading="lazy"
-              />
-              <Card.Body className="text-center">
-                <Card.Title style={{ fontSize: "1rem" }}>{eachAcc.title}</Card.Title>
-              </Card.Body>
-            </Card>
+                  as={Link}
+                  to={`/housingdetails/${eachAcc._id}`}
+                  style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
+                >
+                  <Card.Img
+                    src={eachAcc.photos?.[0] || "/placeholder.png"}
+                    alt="Alojamiento"
+                    style={{ height: "200px", objectFit: "cover" }}
+                  />
+                </Card>
+                <div>
+                  <h7>{eachAcc.title}</h7>
+                  <p>{(eachAcc.cost ?? 0) * 2}€ por dos noches</p>
+                </div>
           </Col>
         ))}
       </Row>

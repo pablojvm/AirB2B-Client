@@ -269,29 +269,19 @@ function ProfilePage() {
                           xl={2}
                         >
                           <Card
-                            className="border-0 shadow-sm h-100"
-                            as={Link}
-                            to={`/housingdetails/${acc._id}`}
-                            style={{
-                              textDecoration: "none",
-                              borderRadius: "20px",
-                              overflow: "hidden",
-                            }}
-                          >
-                            <Card.Img
-                              src={acc.photos?.[0] ?? "/placeholder.png"}
-                              alt={acc.title ?? "Alojamiento"}
-                              style={{
-                                height: "200px",
-                                objectFit: "cover",
-                                width: "100%",
-                              }}
-                              loading="lazy"
-                            />
-                            <Card.Body className="text-center">
-                              <Card.Title>{acc.title}</Card.Title>
-                            </Card.Body>
-                          </Card>
+                  as={Link}
+                  to={`/housingdetails/${acc._id}`}
+                  style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
+                >
+                  <Card.Img
+                    src={acc.photos?.[0] || "/placeholder.png"}
+                    alt="Alojamiento"
+                    style={{ height: "200px", objectFit: "cover" }}
+                  />
+                </Card>
+                <div>
+                  <h7>{acc.title}</h7>
+                </div>
                         </Col>
                       ))}
                     </Row>

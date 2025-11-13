@@ -1,10 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import service from "../services/service.config";
-import { Card, Pagination, Row, Col, Spinner, Alert, Container } from "react-bootstrap";
+import {
+  Card,
+  Pagination,
+  Row,
+  Col,
+  Spinner,
+  Alert,
+  Container,
+  Button,
+} from "react-bootstrap";
+import { AuthContext } from "../context/auth.context";
 
-function Carousel3() {
+function Carousel3({ setShowLoginModal }) {
   const navigate = useNavigate();
+  const {
+    favorites = [],
+    toggleFavorite,
+    isLoggedIn,
+  } = useContext(AuthContext);
 
   const [acc, setAcc] = useState([]);
   const [city, setCity] = useState("");
@@ -24,22 +39,34 @@ function Carousel3() {
     try {
       setLoading(true);
       const response = await service.get(`/accommodation/randomCity`);
-      setAcc(response.data?.accommodations ?? []);
-      setCity(response.data?.city ?? "");
+
+      if (Array.isArray(response.data?.accommodations)) {
+        setAcc(response.data.accommodations);
+        setCity(response.data.city ?? "");
+      } else if (Array.isArray(response.data)) {
+        setAcc(response.data);
+        setCity("");
+      } else {
+        setAcc([]);
+        setCity("");
+      }
     } catch (error) {
-      console.log(error);
+      console.error("Error cargando alojamientos:", error);
       navigate("/500");
     } finally {
       setLoading(false);
     }
   };
 
-  const totalItems = acc.length;
+  const totalItems = Array.isArray(acc) ? acc.length : 0;
   const maxStart = Math.max(0, totalItems - pageSize);
-  const visible = acc.slice(startIndex, startIndex + pageSize);
+  const visible = Array.isArray(acc)
+    ? acc.slice(startIndex, startIndex + pageSize)
+    : [];
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1)); 
-  const handleNext = () => setStartIndex((prev) => Math.min(maxStart, prev + 1));
+  const handlePrev = () => setStartIndex((prev) => Math.max(0, prev - 1));
+  const handleNext = () =>
+    setStartIndex((prev) => Math.min(maxStart, prev + 1));
 
   return (
     <Container className="mt-4">
@@ -54,9 +81,13 @@ function Carousel3() {
         <h2>Alojamientos en {city || "..."}</h2>
         <Pagination className="m-0">
           <Pagination.Prev onClick={handlePrev} disabled={startIndex === 0} />
-          <Pagination.Next onClick={handleNext} disabled={startIndex >= maxStart} />
+          <Pagination.Next
+            onClick={handleNext}
+            disabled={startIndex >= maxStart}
+          />
         </Pagination>
       </div>
+
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
           <Spinner animation="border" role="status" />
@@ -65,49 +96,67 @@ function Carousel3() {
         <Alert variant="info">No hay alojamientos para mostrar.</Alert>
       ) : (
         <Row className="g-4 justify-content-start">
-          {visible.map((eachAcc, idx) => (
-            <Col key={eachAcc._id ?? startIndex + idx} xs={12} sm={6} md={4} lg={3} xl={2}>
-              <Card
-                className="border-0 shadow-sm h-100"
-                as={Link}
-                to={`/housingdetails/${eachAcc._id}`}
-                style={{
-                  textDecoration: "none",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                }}
+          {visible.map((eachAcc, idx) => {
+            const isFav = favorites.includes(eachAcc._id);
+            return (
+              <Col
+                key={eachAcc._id ?? startIndex + idx}
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                xl={2}
               >
-                <Card.Img
-                  src={eachAcc.photos?.[0] || "/placeholder.png"}
-                  alt="Alojamiento"
+                <Card
+                  as={Link}
+                  to={`/housingdetails/${eachAcc._id}`}
                   style={{
-                    height: "200px",
-                    objectFit: "cover",
-                    width: "100%",
+                    textDecoration: "none",
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    position: "relative",
                   }}
-                />
-
-                <Card.Body className="text-center d-flex flex-column">
-                  <div style={{ flex: 1 }}>
-                    <Card.Title style={{ fontSize: "1rem" }}>{eachAcc.title}</Card.Title>
-                    <Card.Subtitle className="mb-2 text-muted">{eachAcc.cost}€</Card.Subtitle>
-                  </div>
-                  <Card.Text
-                    style={{
-                      fontSize: "0.85rem",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {eachAcc.description}
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
+                >
+                  <Card.Img
+                    src={eachAcc.photos?.[0] || "/placeholder.png"}
+                    alt="Alojamiento"
+                    style={{ height: "200px", objectFit: "cover" }}
+                  />
+                  <Card.ImgOverlay>
+                    <Button
+                      variant="link"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isLoggedIn) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        toggleFavorite(eachAcc._id);
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        background: "transparent",
+                        border: "none",
+                      }}
+                    >
+                      <img
+                        src={isFav ? "/corazon-rojo.png" : "/corazon.png"}
+                        alt="Fav"
+                        style={{ width: 40, height: 40 }}
+                      />
+                    </Button>
+                  </Card.ImgOverlay>
+                </Card>
+                <div>
+                  <h7>{eachAcc.title}</h7>
+                  <p>{(eachAcc.cost ?? 0) * 2}€ por dos noches</p>
+                </div>
+              </Col>
+            );
+          })}
         </Row>
       )}
     </Container>
