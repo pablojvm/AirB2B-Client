@@ -22,6 +22,7 @@ import PaymentPage from "./pages/PaymentPage";
 import MyReviewsPage from "./pages/MyReviewsPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaginaResultados from "./pages/PaginaResultados";
+import Page404 from "./pages/Page404"
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -116,6 +117,7 @@ function App() {
           }
         />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/*" element={<Page404 />} />
         <Route path="/500" element={<Page500 />} />
       </Routes>
 

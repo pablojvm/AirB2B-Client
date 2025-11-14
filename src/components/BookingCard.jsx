@@ -174,4 +174,3 @@ function BookingCard({ accommodation, minNights = 1, maxGuests = 8, onBooked }) 
 }
 
 export default BookingCard;
-

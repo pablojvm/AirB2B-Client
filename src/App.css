@@ -11,13 +11,11 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* CSS (ponlo en tu hoja de estilos) */
 .first-page {
   padding: 20px 40px;
   box-sizing: border-box;
 }
 
-/* Flex: texto a la izquierda, pasos a la derecha en desktop */
 .intro-and-steps {
   display: flex;
   align-items: center;
@@ -26,13 +24,11 @@ input[type=number]::-webkit-outer-spin-button {
   gap: 32px;
 }
 
-/* Intro (columna izquierda) */
 .intro {
   flex: 1 1 320px;
   min-width: 220px;
 }
 
-/* Steps (columna derecha) - los pasos en columna */
 .steps {
   flex: 1 1 420px;
   display: flex;
@@ -40,7 +36,6 @@ input[type=number]::-webkit-outer-spin-button {
   gap: 20px;
 }
 
-/* Cada paso: texto y imagen alineados horizontalmente en desktop */
 .step {
   display: flex;
   align-items: center;
@@ -48,13 +43,11 @@ input[type=number]::-webkit-outer-spin-button {
   gap: 16px;
 }
 
-/* Texto del paso */
 .step-text {
   flex: 1 1 auto;
   min-width: 160px;
 }
 
-/* Imagen del paso: tamaño fijo en desktop pero responsiva */
 .step-img img {
   width: 200px;
   max-width: 40%;
@@ -64,12 +57,6 @@ input[type=number]::-webkit-outer-spin-button {
   object-fit: cover;
 }
 
-/* ====== MOBILE ====== */
-/* En pantallas pequeñas apilamos todo verticalmente:
-   - .intro-and-steps => columna
-   - cada .step => columna (texto arriba, imagen debajo)
-   - imágenes se hacen full-width con un max-width razonable
-*/
 @media (max-width: 991.98px) {
   .first-page {
     padding: 16px;
@@ -105,12 +92,11 @@ input[type=number]::-webkit-outer-spin-button {
 
   .step-img img {
     width: 100%;
-    max-width: 420px; /* evita que la imagen sea gigantesca en pantallas medianas */
+    max-width: 420px;
     align-self: center;
   }
 }
 
-/* Opcional: ajustes finos para pantallas muy pequeñas */
 @media (max-width: 575.98px) {
   .intro-and-steps {
     padding: 12px 0;

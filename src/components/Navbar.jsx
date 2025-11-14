@@ -123,23 +123,15 @@ function NavBar() {
                 lg={3}
                 className="d-flex justify-content-end align-items-center"
               >
-                {acc.length == 0 ? (
-                  <Button
-                    variant="light"
-                    onClick={() => setShowHostModal(true)}
-                    className="me-2"
-                  >
-                    Hazte anfitrión
-                  </Button>
-                ) : (
-                  <Button
-                    variant="light"
-                    onClick={() => setShowHostModal(true)}
-                    className="me-2"
-                  >
-                    Sube otro alojamiento
-                  </Button>
-                )}
+                <Button
+                  variant="light"
+                  onClick={() => setShowHostModal(true)}
+                  className="me-2"
+                >
+                  {!isLoggedIn || acc.length === 0
+                    ? "Hazte anfitrión"
+                    : "Sube otro alojamiento"}
+                </Button>
 
                 <Dropdown
                   as={ButtonGroup}
