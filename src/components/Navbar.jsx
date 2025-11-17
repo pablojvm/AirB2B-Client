@@ -11,7 +11,7 @@ import {
   Dropdown,
   ButtonGroup,
 } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import ModalLogin from "./ModalLogin";
 import ModalLoginDone from "./ModalLoginDone";
@@ -20,6 +20,7 @@ import service from "../services/service.config";
 
 function NavBar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, authenticateUser, loggedUserId } =
     useContext(AuthContext);
 
@@ -36,6 +37,12 @@ function NavBar() {
   useEffect(() => {
     getUser();
   }, []);
+
+  useEffect(() => {
+  if (location.pathname === "/") {
+    setQuery("");
+  }
+}, [location.pathname]);
 
   const getUser = async () => {
     try {
