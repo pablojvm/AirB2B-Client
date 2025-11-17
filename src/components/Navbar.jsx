@@ -57,10 +57,13 @@ function NavBar() {
   };
 
   const goSearch = (city) => {
-    const cityTrimmed = (city || query || "").trim();
-    if (!cityTrimmed) return;
-    navigate(`/search?city=${encodeURIComponent(cityTrimmed)}`);
-  };
+  const cityTrimmed = (city || query || "").trim();
+  if (!cityTrimmed) return;
+
+  const cityFinal = cityTrimmed[0].toUpperCase() + cityTrimmed.slice(1);
+
+  navigate(`/search?city=${encodeURIComponent(cityFinal)}`);
+};
 
   const onKeyDown = (e) => {
     if (e.key === "Enter") {
