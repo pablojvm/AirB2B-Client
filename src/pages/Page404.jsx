@@ -1,39 +1,22 @@
-import { Container, Button, Row, Col, Image } from "react-bootstrap";
+import { Container, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 function Page404() {
   return (
-     <Container
-      fluid
-      className="d-flex flex-column justify-content-center align-items-center text-center"
-      style={{ minHeight: "100vh", backgroundColor: "#f7f7f7" }}
-    >
-      <Row>
-        <Col>
-          <Image
-            src="https://cdn-icons-png.flaticon.com/512/6146/6146584.png"
-            alt="Not Found"
-            style={{ width: "170px", opacity: 0.8 }}
-            className="mb-4"
-            rounded
-          />
-
-          <h1 className="display-3 fw-bold mb-3">404</h1>
-          <p className="fs-4 text-muted mb-4">
-            Ups… no encontramos la página que buscas.
-          </p>
-
-          <Button
-            variant="danger"
-            href="/"
-            size="lg"
-            className="px-4 py-2 rounded-3 shadow-sm"
-          >
-            Volver al inicio
-          </Button>
-        </Col>
-      </Row>
+    <Container className="error-page text-center">
+      <div className="error-page__icon" aria-hidden>
+        🧭
+      </div>
+      <h1 className="error-page__code">404</h1>
+      <p className="error-page__text">
+        No encontramos la página que buscas. Puede que se haya mudado o que el
+        enlace esté roto.
+      </p>
+      <Button as={Link} to="/" className="airb2b-btn-primary mt-2">
+        Volver al inicio
+      </Button>
     </Container>
-  )
+  );
 }
 
-export default Page404
+export default Page404;

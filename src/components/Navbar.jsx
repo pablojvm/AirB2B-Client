@@ -2,14 +2,11 @@ import { useState, useContext, useEffect } from "react";
 import {
   Navbar,
   Container,
-  Row,
-  Col,
   Image,
   InputGroup,
   Button,
   Form,
   Dropdown,
-  ButtonGroup,
 } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
@@ -21,37 +18,38 @@ import service from "../services/service.config";
 function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, authenticateUser, loggedUserId } =
-    useContext(AuthContext);
+  const { isLoggedIn, authenticateUser } = useContext(AuthContext);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showHostModal, setShowHostModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [query, setQuery] = useState("");
-  const [acc, setAcc] = useState("Hazte anfitrión");
-
-  const toggleDropdown = () => setShowMenu(!showMenu);
-  const closeDropdown = () => setShowMenu(false);
+  const [ownCount, setOwnCount] = useState(0);
 
   useEffect(() => {
-    getUser();
-  }, []);
+    let cancelled = false;
+    const fetchOwn = async () => {
+      if (!isLoggedIn) {
+        setOwnCount(0);
+        return;
+      }
+      try {
+        const res = await service.get("/accommodation/own");
+        if (!cancelled) setOwnCount(Array.isArray(res.data) ? res.data.length : 0);
+      } catch {
+        if (!cancelled) setOwnCount(0);
+      }
+    };
+    fetchOwn();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   useEffect(() => {
-  if (location.pathname === "/") {
-    setQuery("");
-  }
-}, [location.pathname]);
-
-  const getUser = async () => {
-    try {
-      const response = await service.get(`/accommodation/own`, loggedUserId);
-      setAcc(response.data);
-    } catch (error) {
-      console.error("Error al obtener el perfil del usuario:", error);
-    }
-  };
+    if (location.pathname === "/") setQuery("");
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     localStorage.removeItem("authToken");
@@ -59,18 +57,16 @@ function NavBar() {
       await authenticateUser();
       navigate("/");
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
   const goSearch = (city) => {
-  const cityTrimmed = (city || query || "").trim();
-  if (!cityTrimmed) return;
-
-  const cityFinal = cityTrimmed[0].toUpperCase() + cityTrimmed.slice(1);
-
-  navigate(`/search?city=${encodeURIComponent(cityFinal)}`);
-};
+    const cityTrimmed = (city || query || "").trim();
+    if (!cityTrimmed) return;
+    const cityFinal = cityTrimmed[0].toUpperCase() + cityTrimmed.slice(1);
+    navigate(`/search?city=${encodeURIComponent(cityFinal)}`);
+  };
 
   const onKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -79,235 +75,163 @@ function NavBar() {
     }
   };
 
+  const hostLabel =
+    isLoggedIn && ownCount > 0 ? "Sube otro alojamiento" : "Hazte anfitrión";
+
+  const userMenu = (
+    <Dropdown
+      show={showMenu}
+      onToggle={(isOpen) => setShowMenu(isOpen)}
+      align="end"
+    >
+      <Dropdown.Toggle
+        as="button"
+        className="airb2b-menu-btn"
+        aria-label="Menú de usuario"
+      >
+        <span className="airb2b-menu-burger" aria-hidden>
+          ☰
+        </span>
+        <span className="airb2b-menu-avatar" aria-hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.582-8 6v2h16v-2c0-3.418-3.582-6-8-6z" />
+          </svg>
+        </span>
+      </Dropdown.Toggle>
+      <Dropdown.Menu className="airb2b-menu" onClick={() => setShowMenu(false)}>
+        {isLoggedIn ? (
+          <>
+            <Dropdown.Item as={Link} to="/myProfile">
+              Perfil
+            </Dropdown.Item>
+            <Dropdown.Item as={Link} to="/myHouses">
+              Mis alojamientos
+            </Dropdown.Item>
+            <Dropdown.Item as={Link} to="/favoriteshousing">
+              Favoritos
+            </Dropdown.Item>
+            <Dropdown.Item as={Link} to="/myBookings">
+              Mis reservas
+            </Dropdown.Item>
+            <Dropdown.Item as={Link} to="/myReviews">
+              Mis reseñas
+            </Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={handleLogout}>Cerrar sesión</Dropdown.Item>
+          </>
+        ) : (
+          <>
+            <Dropdown.Item onClick={() => setShowLoginModal(true)}>
+              Entrar o registrarme
+            </Dropdown.Item>
+            <Dropdown.Item onClick={() => setShowHostModal(true)}>
+              Hazte anfitrión
+            </Dropdown.Item>
+          </>
+        )}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+
+  const renderSearch = () => (
+    <div className="airb2b-search">
+      <InputGroup>
+        <Form.Control
+          placeholder="¿A dónde vamos?"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={onKeyDown}
+          aria-label="Buscar ciudad"
+        />
+        {query && (
+          <Button
+            variant="link"
+            className="airb2b-search-clear"
+            onClick={() => setQuery("")}
+            title="Limpiar"
+            aria-label="Limpiar búsqueda"
+          >
+            ×
+          </Button>
+        )}
+        <Button
+          className="airb2b-search-btn"
+          onClick={() => goSearch()}
+          aria-label="Buscar"
+          title="Buscar"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle cx="11" cy="11" r="7" stroke="#fff" strokeWidth="2.5" />
+            <path
+              d="m21 21-4.3-4.3"
+              stroke="#fff"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="d-none d-md-inline ms-2">Buscar</span>
+        </Button>
+      </InputGroup>
+    </div>
+  );
+
   return (
     <>
-      <Navbar expand="lg" className="bg-body-tertiary py-2" id="navbar">
-        <Container fluid className="px-3">
-          <div className="d-none d-lg-flex align-items-center w-100">
-            <Row className="w-100 align-items-center">
-              <Col lg={3} className="d-flex align-items-center">
-                <Link to="/" className="d-flex align-items-center">
-                  <Image
-                    src="logoair.png"
-                    width={100}
-                    height="auto"
-                    alt="Logo"
-                  />
-                </Link>
-              </Col>
-              <Col lg={6} className="d-flex justify-content-center">
-                <div style={{ width: "100%", maxWidth: 520 }}>
-                  <InputGroup className="mb-0 w-100">
-                    <Form.Control
-                      placeholder="Introduce destino"
-                      className="rounded-pill"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={onKeyDown}
-                      aria-label="Buscar ciudad"
-                    />
-                    <Button
-                      variant="outline-secondary"
-                      className="rounded-pill"
-                      onClick={() => goSearch()}
-                      aria-label="Buscar"
-                      title="Buscar"
-                      style={{ marginLeft: 8 }}
-                    >
-                      <img src="lupa.png" width="15" alt="Buscar" />
-                    </Button>
-                    {query && (
-                      <Button
-                        variant="link"
-                        onClick={() => setQuery("")}
-                        style={{ marginLeft: 8 }}
-                        title="Limpiar"
-                      >
-                        ✕
-                      </Button>
-                    )}
-                  </InputGroup>
-                </div>
-              </Col>
-              <Col
-                lg={3}
-                className="d-flex justify-content-end align-items-center"
+      <Navbar className="airb2b-navbar" id="navbar" sticky="top">
+        <Container fluid className="airb2b-navbar-inner">
+          {/* Desktop */}
+          <div className="d-none d-lg-flex align-items-center w-100 justify-content-between gap-3">
+            <Link to="/" className="airb2b-logo" aria-label="AirB2B inicio">
+              <Image src="/logoair.png" height="38" alt="AirB2B" />
+            </Link>
+            <div className="flex-grow-1 d-flex justify-content-center">
+              {renderSearch()}
+            </div>
+            <div className="d-flex align-items-center gap-2">
+              <Button
+                variant="link"
+                className="airb2b-host-link"
+                onClick={() => setShowHostModal(true)}
               >
-                <Button
-                  variant="light"
-                  onClick={() => setShowHostModal(true)}
-                  className="me-2"
-                >
-                  {!isLoggedIn || acc.length === 0
-                    ? "Hazte anfitrión"
-                    : "Sube otro alojamiento"}
-                </Button>
-
-                <Dropdown
-                  as={ButtonGroup}
-                  show={showMenu}
-                  onToggle={setShowMenu}
-                >
-                  <Button
-                    variant="light"
-                    onClick={toggleDropdown}
-                    style={{ borderRadius: "20px", padding: 6 }}
-                    aria-haspopup="menu"
-                    aria-expanded={showMenu}
-                  >
-                    <img src="/burguer.png" width="20" alt="Menú" />
-                  </Button>
-
-                  {isLoggedIn ? (
-                    <Dropdown.Menu
-                      align="end"
-                      show={showMenu}
-                      onClick={closeDropdown}
-                    >
-                      <Dropdown.Item as={Link} to="/myHouses">
-                        Mis Alojamientos
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/favoriteshousing">
-                        Favoritos
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myBookings">
-                        Reservas
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myProfile">
-                        Perfil
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myReviews">
-                        Mis reseñas
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item onClick={handleLogout}>
-                        Cerrar Sesión
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  ) : (
-                    <Dropdown.Menu
-                      align="end"
-                      show={showMenu}
-                      onClick={closeDropdown}
-                    >
-                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>
-                        Entrar o Registrarme
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  )}
-                </Dropdown>
-              </Col>
-            </Row>
+                {hostLabel}
+              </Button>
+              {userMenu}
+            </div>
           </div>
+
+          {/* Mobile / Tablet */}
           <div className="d-flex d-lg-none flex-column w-100">
             <div className="d-flex w-100 justify-content-between align-items-center mb-2">
-              <Link to="/" className="d-flex align-items-center">
-                <Image src="logoair.png" width={90} height="auto" alt="Logo" />
+              <Link to="/" className="airb2b-logo" aria-label="AirB2B inicio">
+                <Image src="/logoair.png" height="30" alt="AirB2B" />
               </Link>
-
-              <div className="d-flex align-items-center">
-                <Button
-                  variant="light"
+              <div className="d-flex align-items-center gap-2">
+                <button
+                  type="button"
+                  className="airb2b-host-icon d-sm-none"
                   onClick={() => setShowHostModal(true)}
-                  className="me-2"
+                  aria-label="Hazte anfitrión"
+                  title="Hazte anfitrión"
                 >
-                  Hazte anfitrión
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3l9-8z" />
+                  </svg>
+                </button>
+                <Button
+                  variant="link"
+                  className="airb2b-host-link d-none d-sm-inline-flex"
+                  onClick={() => setShowHostModal(true)}
+                >
+                  {hostLabel}
                 </Button>
-
-                <Dropdown
-                  as={ButtonGroup}
-                  show={showMenu}
-                  onToggle={setShowMenu}
-                >
-                  <Button
-                    variant="light"
-                    onClick={toggleDropdown}
-                    style={{
-                      borderColor: "black",
-                      borderRadius: "20px",
-                      padding: 6,
-                    }}
-                    aria-haspopup="menu"
-                    aria-expanded={showMenu}
-                  >
-                    <img src="/burguer.png" width="20" alt="Menú" />
-                  </Button>
-
-                  {isLoggedIn ? (
-                    <Dropdown.Menu
-                      align="end"
-                      show={showMenu}
-                      onClick={closeDropdown}
-                    >
-                      <Dropdown.Item as={Link} to="/myHouses">
-                        Mis Alojamientos
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/favoriteshousing">
-                        Favoritos
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myBookings">
-                        Reservas
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myProfile">
-                        Perfil
-                      </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/myReviews">
-                        Mis reseñas
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item onClick={handleLogout}>
-                        Cerrar Sesión
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  ) : (
-                    <Dropdown.Menu
-                      align="end"
-                      show={showMenu}
-                      onClick={closeDropdown}
-                    >
-                      <Dropdown.Item onClick={() => setShowLoginModal(true)}>
-                        Entrar o Registrarme
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  )}
-                </Dropdown>
+                {userMenu}
               </div>
             </div>
-            <div className="w-100">
-              <InputGroup className="mb-0 w-100">
-                <Form.Control
-                  placeholder="Introduce destino"
-                  className="rounded-pill"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  aria-label="Buscar ciudad"
-                />
-                <Button
-                  variant="outline-secondary"
-                  className="rounded-pill"
-                  onClick={() => goSearch()}
-                  aria-label="Buscar"
-                  title="Buscar"
-                  style={{ marginLeft: 8 }}
-                >
-                  <img src="lupa.png" width="15" alt="Buscar" />
-                </Button>
-                {query && (
-                  <Button
-                    variant="link"
-                    onClick={() => setQuery("")}
-                    style={{ marginLeft: 8 }}
-                    title="Limpiar"
-                  >
-                    ✕
-                  </Button>
-                )}
-              </InputGroup>
-            </div>
+            <div className="w-100">{renderSearch()}</div>
           </div>
         </Container>
       </Navbar>
+
       <ModalLogin
         show={showLoginModal}
         handleClose={() => setShowLoginModal(false)}

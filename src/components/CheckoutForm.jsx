@@ -1,72 +1,89 @@
 import { useEffect, useState } from "react";
-import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import { Button, Spinner, Alert } from "react-bootstrap";
 
 function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
 
   const [message, setMessage] = useState(null);
+  const [variant, setVariant] = useState("info");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!stripe) return;
-    const clientSecret = new URLSearchParams(window.location.search).get( "payment_intent_client_secret");
-
+    const clientSecret = new URLSearchParams(window.location.search).get(
+      "payment_intent_client_secret"
+    );
     if (!clientSecret) return;
 
     stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      if (!paymentIntent) return;
       switch (paymentIntent.status) {
         case "succeeded":
-          setMessage("Payment succeeded!");
+          setMessage("Pago completado. ¡Gracias!");
+          setVariant("success");
           break;
         case "processing":
-          setMessage("Your payment is processing.");
+          setMessage("Tu pago se está procesando.");
+          setVariant("info");
           break;
         case "requires_payment_method":
-          setMessage("Your payment was not successful, please try again.");
+          setMessage("El pago no se completó. Intenta otro método.");
+          setVariant("warning");
           break;
         default:
-          setMessage("Something went wrong.");
-          break;
+          setMessage("Algo salió mal con el pago.");
+          setVariant("danger");
       }
     });
   }, [stripe]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setIsLoading(true);
+    setMessage(null);
 
-  if (!stripe || !elements) return;
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/payment-success`,
+      },
+    });
 
-  setIsLoading(true);
-
-  const { error } = await stripe.confirmPayment({
-    elements,
-    confirmParams: {
-      return_url: `${window.location.origin}/payment-success`,
-    },
-  });
-    if (error.type === "card_error" || error.type === "validation_error") {
-      setMessage(error.message);
-    } else {
-      setMessage("An unexpected error occurred.");
+    // confirmPayment redirige al return_url cuando va bien; si vuelve aquí, hay error.
+    if (error) {
+      if (error.type === "card_error" || error.type === "validation_error") {
+        setMessage(error.message || "Error con la tarjeta");
+      } else {
+        setMessage("Ocurrió un error inesperado.");
+      }
+      setVariant("danger");
     }
 
-  setIsLoading(false);
-};
-
-  const paymentElementOptions = {
-    layout: "tabs"
+    setIsLoading(false);
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit}>
-      <PaymentElement id="payment-element" options={paymentElementOptions} />
-      <button disabled={isLoading || !stripe || !elements} id="submit">
-        <span id="button-text">
-          {isLoading ? <div className="spinner" id="spinner"></div> : "Pay now"}
-        </span>
-      </button>
-      {message && <div id="payment-message">{message}</div>}
+    <form id="payment-form" onSubmit={handleSubmit} className="checkout-form">
+      <PaymentElement id="payment-element" options={{ layout: "tabs" }} />
+      <Button
+        type="submit"
+        disabled={isLoading || !stripe || !elements}
+        className="airb2b-btn-primary w-100 mt-3"
+      >
+        {isLoading ? <Spinner animation="border" size="sm" /> : "Pagar ahora"}
+      </Button>
+      {message && (
+        <Alert variant={variant} className="mt-3 mb-0">
+          {message}
+        </Alert>
+      )}
     </form>
   );
 }

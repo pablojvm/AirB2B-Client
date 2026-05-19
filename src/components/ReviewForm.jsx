@@ -1,7 +1,6 @@
 import { useState } from "react";
+import { Card, Form, Button, Alert, Spinner } from "react-bootstrap";
 import service from "../services/service.config";
-import { AuthContext } from "../context/auth.context";
-import { useContext } from "react";
 
 function ReviewForm({ accommodationId, onNewReview }) {
   const [title, setTitle] = useState("");
@@ -10,28 +9,28 @@ function ReviewForm({ accommodationId, onNewReview }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { loggedUserId } = useContext(AuthContext);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
-    if (text.length < 15) {
+    if (title.trim().length < 3) {
+      setError("El título debe tener al menos 3 caracteres");
+      return;
+    }
+    if (text.trim().length < 15) {
       setError("El texto debe tener al menos 15 caracteres");
-      setLoading(false);
       return;
     }
 
     try {
+      setLoading(true);
       const response = await service.post("/review", {
-        title,
-        text,
+        title: title.trim(),
+        text: text.trim(),
         stars,
-        creator: loggedUserId,
-        accommodation: accommodationId
+        accommodation: accommodationId,
       });
-      onNewReview(response.data);
+      onNewReview?.(response.data);
       setTitle("");
       setText("");
       setStars(5);
@@ -43,51 +42,64 @@ function ReviewForm({ accommodationId, onNewReview }) {
   };
 
   return (
-    <div className="card p-3 mb-3">
-      <h5>Escribe una reseña</h5>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="mb-2">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Título"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
+    <Card className="review-form mb-3 border-0 shadow-sm">
+      <Card.Body>
+        <h5 className="mb-3">Escribe una reseña</h5>
+        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-2">
+            <Form.Label className="small text-muted">Título</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Ej: Una estancia increíble"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={120}
+              required
+            />
+          </Form.Group>
 
-        <div className="mb-2">
-          <textarea
-            className="form-control"
-            placeholder="Escribe tu reseña (mínimo 15 caracteres)"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            required
-          />
-        </div>
+          <Form.Group className="mb-2">
+            <Form.Label className="small text-muted">
+              Tu opinión (mínimo 15 caracteres)
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              required
+            />
+          </Form.Group>
 
-        <div className="mb-2">
-          <label>Valoración:</label>
-          <select
-            className="form-select"
-            value={stars}
-            onChange={(e) => setStars(Number(e.target.value))}
+          <Form.Group className="mb-3">
+            <Form.Label className="small text-muted">Valoración</Form.Label>
+            <div className="review-form__stars">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  type="button"
+                  key={n}
+                  onClick={() => setStars(n)}
+                  className={`review-form__star ${stars >= n ? "is-active" : ""}`}
+                  aria-label={`${n} estrella${n > 1 ? "s" : ""}`}
+                >
+                  ★
+                </button>
+              ))}
+              <span className="ms-2 text-muted small">{stars}/5</span>
+            </div>
+          </Form.Group>
+
+          <Button
+            type="submit"
+            className="airb2b-btn-primary"
+            disabled={loading}
           >
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n} ⭐
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button className="btn btn-primary" type="submit" disabled={loading}>
-          {loading ? "Enviando..." : "Enviar reseña"}
-        </button>
-      </form>
-    </div>
+            {loading ? <Spinner animation="border" size="sm" /> : "Enviar reseña"}
+          </Button>
+        </Form>
+      </Card.Body>
+    </Card>
   );
 }
 

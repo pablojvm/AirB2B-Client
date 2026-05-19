@@ -1,72 +1,102 @@
 import { useEffect, useState, useRef } from "react";
-import { Button, Spinner } from "react-bootstrap";
+import { Container, Button, Spinner, Alert, Form, Card } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import service from "../services/service.config";
-import { useNavigate } from "react-router-dom";
 
 function EditProfilePage() {
-  const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [savingDetails, setSavingDetails] = useState(false);
+
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [emailDraft, setEmailDraft] = useState("");
+  const [numberDraft, setNumberDraft] = useState("");
 
   useEffect(() => {
-    getProfile();
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await service.get("/user/profile");
+        if (cancelled) return;
+        setProfile(response.data || null);
+        setUsernameDraft(response.data?.username || "");
+        setEmailDraft(response.data?.email || "");
+        setNumberDraft(response.data?.number || "");
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        if (!cancelled) setError("No se pudo cargar el perfil.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const getProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await service.get("/user/profile");
-      setProfile(response.data ?? null);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      if (error.response?.status === 401) {
-        navigate("/login");
-        return;
-      }
-      navigate("/500");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleFileUpload = async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
 
-  setIsUploading(true);
-  const uploadData = new FormData();
-  uploadData.append("image", file);
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+    try {
+      const uploadRes = await service.post("/upload", uploadData);
+      const imageUrl = uploadRes.data?.imageUrl;
+      if (!imageUrl) throw new Error("No imageUrl returned from upload");
 
-  try {
-    const uploadRes = await service.post("/upload", uploadData);
-    const imageUrl = uploadRes.data?.imageUrl;
-    if (!imageUrl) throw new Error("No imageUrl returned from upload");
-
-    const saveRes = await service.patch("/user/profile", { photo: imageUrl });
-    if (saveRes.data?.user) {
-      setProfile(saveRes.data.user);
-    } else {
-      setProfile((prev) => (prev ? { ...prev, photo: imageUrl } : prev));
-    }
-  } catch (error) {
-    console.error("Error uploading & saving image:", error);
-    alert("Error subiendo la imagen. Inténtalo de nuevo.");
-  } finally {
-    setIsUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-};
-
-
-  const handleChooseFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+      const saveRes = await service.patch("/user/profile", { photo: imageUrl });
+      if (saveRes.data?.user) {
+        setProfile(saveRes.data.user);
+      } else {
+        setProfile((prev) => (prev ? { ...prev, photo: imageUrl } : prev));
+      }
+      setSuccess("Foto actualizada");
+    } catch (err) {
+      console.error("Error uploading & saving image:", err);
+      setError(
+        err?.response?.data?.errorMessage ||
+          "Error subiendo la imagen. Inténtalo de nuevo."
+      );
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  const handleSaveDetails = async (e) => {
+    e.preventDefault();
+    setSavingDetails(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const saveRes = await service.patch("/user/profile", {
+        username: usernameDraft,
+        email: emailDraft,
+        number: numberDraft,
+      });
+      setProfile(saveRes.data?.user || profile);
+      setSuccess("Perfil actualizado");
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data?.errorMessage ||
+          "No se pudo guardar el perfil."
+      );
+    } finally {
+      setSavingDetails(false);
+    }
+  };
+
+  const handleChooseFile = () => fileInputRef.current?.click();
 
   const initial = profile?.username
     ? profile.username.charAt(0).toUpperCase()
@@ -74,108 +104,106 @@ function EditProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, textAlign: "center" }}>
+      <Container className="py-5 text-center">
         <Spinner animation="border" />
-      </div>
+      </Container>
     );
   }
 
-  const displayImage = profile?.photo ?? null;
-
   return (
-    <div
-      style={{
-        padding: 24,
-        display: "flex",
-        justifyContent: "space-around",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 32,
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        {displayImage ? (
-          <img
-            src={displayImage}
-            alt="Foto de perfil"
-            style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              objectFit: "cover",
-              display: "block",
-              margin: "0 auto",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              backgroundColor: "#000",
-              color: "#fff",
-              fontSize: "48px",
-              lineHeight: "120px",
-              textAlign: "center",
-              margin: "0 auto",
-            }}
-            aria-hidden
-          >
-            {initial}
-          </div>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          name="image"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={handleFileUpload}
-          disabled={isUploading}
-        />
-        <Button
-          variant="light"
-          onClick={handleChooseFile}
-          disabled={isUploading}
-          aria-busy={isUploading}
-          style={{
-            borderRadius: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "6px 12px",
-          }}
-        >
-          <img src="/camara.png" width="20" alt="icono cámara" />
-          {isUploading ? (
-            <>
-              <Spinner animation="border" size="sm" /> Subiendo...
-            </>
-          ) : (
-            "Cambiar foto"
-          )}
+    <Container className="py-4 edit-profile" style={{ maxWidth: 720 }}>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="page-title mb-0">Editar perfil</h1>
+        <Button as={Link} to="/myProfile" variant="outline-dark" size="sm">
+          Volver
         </Button>
       </div>
-      <div style={{ maxWidth: 500 }}>
-        <h1 style={{ marginBottom: 12 }}>Mi Perfil</h1>
-        <p style={{ color: "#555", fontSize: "1rem", lineHeight: "1.5" }}>
-          Tu perfil puede aparecer en distintos lugares de la plataforma para
-          fomentar la confianza dentro de nuestra comunidad. Podrán consultarlo
-          tanto los anfitriones como los viajeros.
-        </p>
-        <h3 style={{ marginTop: 8 }}>{profile?.username ?? "Usuario"}</h3>
-        <p style={{ color: "#666" }}>{profile?.email}</p>
-      </div>
-    </div>
+
+      {error && <Alert variant="danger">{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
+
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Body className="d-flex align-items-center gap-4">
+          <div className="edit-profile__avatar">
+            {profile?.photo ? (
+              <img src={profile.photo} alt="Foto de perfil" />
+            ) : (
+              <div className="edit-profile__avatar--initial">{initial}</div>
+            )}
+          </div>
+          <div>
+            <h5 className="mb-1">{profile?.username || "Usuario"}</h5>
+            <p className="text-muted small mb-2">
+              Una foto ayuda a generar confianza en la comunidad.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="image"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleFileUpload}
+              disabled={isUploading}
+            />
+            <Button
+              variant="outline-dark"
+              size="sm"
+              onClick={handleChooseFile}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Spinner animation="border" size="sm" /> Subiendo…
+                </>
+              ) : (
+                "Cambiar foto"
+              )}
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <Card.Body>
+          <h5 className="mb-3">Datos personales</h5>
+          <Form onSubmit={handleSaveDetails}>
+            <Form.Group className="mb-3" controlId="username">
+              <Form.Label>Username</Form.Label>
+              <Form.Control
+                value={usernameDraft}
+                onChange={(e) => setUsernameDraft(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="email">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="number">
+              <Form.Label>Teléfono</Form.Label>
+              <Form.Control
+                value={numberDraft}
+                onChange={(e) => setNumberDraft(e.target.value)}
+              />
+            </Form.Group>
+            <Button
+              type="submit"
+              className="airb2b-btn-primary"
+              disabled={savingDetails}
+            >
+              {savingDetails ? (
+                <Spinner animation="border" size="sm" />
+              ) : (
+                "Guardar cambios"
+              )}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 }
 

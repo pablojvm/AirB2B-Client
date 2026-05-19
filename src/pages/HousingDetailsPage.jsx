@@ -1,212 +1,190 @@
-import service from "../services/service.config";
 import { useEffect, useState, useContext } from "react";
-import { Button, Image, Container, Row, Col } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { Button, Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
+import { useParams } from "react-router-dom";
+import service from "../services/service.config";
 import { AuthContext } from "../context/auth.context";
 import BookingCard from "../components/BookingCard";
 import ReviewForm from "../components/ReviewForm";
 
+const IMG_SERVICE = {
+  "Wi-Fi": "/wifi.png",
+  "Air conditioning": "/aire.png",
+  Heating: "/radiador.png",
+  TV: "/tv.png",
+  Washer: "/washer.png",
+  Dryer: "/dryer.png",
+  Kitchen: "/kitchen.png",
+  "Private bathroom": "/bathroom.png",
+  "Hair dryer": "/hairDryer.png",
+  Shampoo: "/shampoo.png",
+  Towels: "/towels.png",
+  Iron: "/iron.png",
+  Parking: "/parking.png",
+  Pool: "/pool.png",
+  Gym: "/gym.png",
+  "Hot tub": "/jacuzzi.png",
+  Balcony: "/balcon.png",
+  Garden: "/jardin.png",
+  "BBQ grill": "/barbacoa.png",
+  Fireplace: "/chimenea.png",
+  "Pet friendly": "/pet.png",
+  "Smoke detector": "/detector.png",
+  "First aid kit": "/botiquin.png",
+  Workspace: "/workspace.png",
+  "Breakfast included": "/desayuno.png",
+  "24h check-in": "/checking.png",
+};
+
 function HousingDetailsPage() {
   const params = useParams();
-  const navigate = useNavigate();
-  const { isLoggedIn, loggedUserId } = useContext(AuthContext);
+  const { isLoggedIn, openLoginModal, favorites, toggleFavorite } =
+    useContext(AuthContext);
 
   const [acc, setAcc] = useState(null);
-  const [fav, setFav] = useState([]);
-  const [isFav, setIsFav] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [stars, setStars] = useState(0);
   const [showForm, setShowForm] = useState(false);
-
-  const imagesServices = {
-    "Wi-Fi": "/wifi.png",
-    "Air conditioning": "/aire.png",
-    Heating: "/radiador.png",
-    TV: "/tv.png",
-    Washer: "/washer.png",
-    Dryer: "/dryer.png",
-    Kitchen: "/kitchen.png",
-    "Private bathroom": "/bathroom.png",
-    "Hair dryer": "/hairDryer.png",
-    Shampoo: "/shampoo.png",
-    Towels: "/towels.png",
-    Iron: "/iron.png",
-    Parking: "/parking.png",
-    Pool: "/pool.png",
-    Gym: "/gym.png",
-    "Hot tub": "/jacuzzi.png",
-    Balcony: "/balcon.png",
-    Garden: "/jardin.png",
-    "BBQ grill": "/barbacoa.png",
-    Fireplace: "/chimenea.png",
-    "Pet friendly": "/pet.png",
-    "Smoke detector": "/detector.png",
-    "First aid kit": "/botiquin.png",
-    Workspace: "/workspace.png",
-    "Breakfast included": "/desayuno.png",
-    "24h check-in": "/checking.png",
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!params.accommodationId) return;
-    getData();
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await service.get(`/accommodation/${params.accommodationId}`);
+        if (!cancelled) setAcc(res.data);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          if (err.response?.status === 404) {
+            setError("Alojamiento no encontrado");
+          } else if (err.response?.status === 400) {
+            setError("La dirección del alojamiento no es válida");
+          } else {
+            setError("No se pudo cargar este alojamiento. Inténtalo más tarde.");
+          }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [params.accommodationId]);
-
-  const getData = async () => {
-    try {
-      const response = await service.get(
-        `/accommodation/${params.accommodationId}`
-      );
-      setAcc(response.data);
-    } catch (error) {
-      console.log(error);
-      navigate("/500");
-    }
-  };
-
-  useEffect(() => {
-    if (isLoggedIn && params.accommodationId) {
-      infoFavorites();
-    } else {
-      setFav([]);
-    }
-  }, [isLoggedIn, params.accommodationId]);
-
-  useEffect(() => {
-    if (!acc?._id) {
-      setIsFav(false);
-      return;
-    }
-    setIsFav(fav.includes(acc._id));
-  }, [acc, fav]);
-
-  const infoFavorites = async () => {
-    try {
-      const response = await service.get("/accommodation/favorites");
-      const ids = Array.isArray(response.data)
-        ? response.data.map((f) => f._id)
-        : [];
-      setFav(ids);
-    } catch (error) {
-      console.log("Error al obtener favoritos:", error);
-      const status = error.response?.status;
-      if (status === 401) {
-        setFav([]);
-      } else if (status !== 403) {
-        navigate("/500");
-      }
-    }
-  };
-
-  const handleToggleFav = async () => {
-    if (!isLoggedIn) {
-      alert("Debes iniciar sesión para guardar favoritos");
-      return;
-    }
-    if (!acc?._id) return;
-
-    try {
-      if (!fav.includes(acc._id)) {
-        await service.post(`/accommodation/favorites/${acc._id}`);
-        setFav((prev) => [...prev, acc._id]);
-        setIsFav(true);
-      } else {
-        await service.delete(`/accommodation/favorites/${acc._id}`);
-        setFav((prev) => prev.filter((id) => id !== acc._id));
-        setIsFav(false);
-      }
-    } catch (error) {
-      console.log("Error al togglear favorito:", error);
-      if (error.response?.status === 401) {
-        alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-      } else {
-        alert(error.response?.data?.message || "Error al actualizar favoritos");
-      }
-    }
-  };
 
   useEffect(() => {
     if (!params.accommodationId) return;
     service
       .get(`/review/${params.accommodationId}`)
       .then((res) => {
-        setReviews(res.data.reviews);
-        setStars(res.data.avgStars);
+        setReviews(res.data.reviews || []);
+        setStars(res.data.avgStars || 0);
       })
-      .catch((err) => console.log("Error al cargar reseñas:", err));
+      .catch((err) => console.error("Error al cargar reseñas:", err));
   }, [params.accommodationId]);
 
   const handleNewReview = (review) => {
     setReviews((prev) => [review, ...prev]);
+    setShowForm(false);
   };
 
-  if (!acc)
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-        <img src="/airbnb.gif" alt="loading" />
-      </div>
-    );
+  const isFav = acc ? favorites.includes(acc._id) : false;
+  const handleToggleFav = () => {
+    if (!isLoggedIn) return openLoginModal();
+    if (acc?._id) toggleFavorite(acc._id);
+  };
 
-  const mainImage = acc.photos?.[0] ?? "/imagenpre.webp";
+  if (loading) {
+    return (
+      <Container className="py-5 text-center">
+        <Spinner animation="border" />
+      </Container>
+    );
+  }
+  if (error) {
+    return (
+      <Container className="py-5">
+        <Alert variant="warning">{error}</Alert>
+      </Container>
+    );
+  }
+  if (!acc) return null;
+
+  const photos =
+    Array.isArray(acc.photos) && acc.photos.length > 0
+      ? acc.photos
+      : ["/imagenpre.webp"];
+  const mainImage = photos[0];
   const otherPhotos = [
-    acc.photos?.[1] ?? "/imagenpre.webp",
-    acc.photos?.[2] ?? "/imagenpre.webp",
-    acc.photos?.[3] ?? "/imagenpre.webp",
-    acc.photos?.[4] ?? "/imagenpre.webp",
+    photos[1] || "/imagenpre.webp",
+    photos[2] || "/imagenpre.webp",
+    photos[3] || "/imagenpre.webp",
+    photos[4] || "/imagenpre.webp",
   ];
 
-  const initial = acc.owner.username
-    ? acc.owner.username.charAt(0).toUpperCase()
-    : "?";
+  const ownerUsername = acc.owner?.username || "Anfitrión";
+  const initial = ownerUsername.charAt(0).toUpperCase();
+  const hasReviews = reviews.length > 0;
 
   return (
-    <Container className="mt-4">
-      <Row className="align-items-center mb-4">
-        <Col xs={12} md={9}>
-          <h2 style={{ fontWeight: 700 }}>{acc.title}</h2>
+    <Container className="housing-details py-4">
+      <Row className="align-items-center mb-3">
+        <Col xs={9}>
+          <h1 className="housing-details__title">{acc.title || "Alojamiento"}</h1>
+          <div className="housing-details__meta">
+            {hasReviews && (
+              <>
+                <span className="housing-details__rating">★ {stars.toFixed(1)}</span>
+                <span className="dot">·</span>
+                <span>
+                  {reviews.length} reseña{reviews.length !== 1 ? "s" : ""}
+                </span>
+                <span className="dot">·</span>
+              </>
+            )}
+            {acc.city && <span>{acc.city}, España</span>}
+          </div>
         </Col>
-        <Col xs={12} md={3} className="text-md-end mt-3 mt-md-0">
+        <Col xs={3} className="text-end">
           <Button
             variant="link"
             onClick={handleToggleFav}
             aria-pressed={isFav}
-            style={{ textDecoration: "none", padding: 6 }}
-            title={isFav ? "Quitar de favoritos" : "Guardar en favoritos"}
+            className="housing-details__fav-btn"
+            title={isFav ? "Quitar de favoritos" : "Guardar"}
           >
-            <img
-              src={isFav ? "/corazon-rojo.png" : "/corazon.png"}
-              alt={isFav ? "Favorito" : "No favorito"}
-              style={{ width: 50, height: 50 }}
-            />
+            <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden>
+              <path
+                d="M12 21s-7-4.534-9.5-9.045C.79 8.523 2.5 4.5 6.5 4.5c2.063 0 3.514 1.16 4.5 2.5C12 5.66 13.437 4.5 15.5 4.5c4 0 5.71 4.023 4 7.455C19 16.466 12 21 12 21z"
+                fill={isFav ? "#FF385C" : "rgba(0,0,0,0.45)"}
+                stroke="#fff"
+                strokeWidth="1.5"
+              />
+            </svg>
           </Button>
         </Col>
       </Row>
 
-      <Row className="mb-4">
+      <Row className="g-2 housing-details__gallery mb-4">
         <Col xs={12} lg={7}>
-          <Image
+          <img
             src={mainImage}
             alt={acc.title}
-            fluid
-            style={{
-              width: "100%",
-              height: 420,
-              objectFit: "cover",
-              borderRadius: 12,
-            }}
+            className="housing-details__main-img"
             loading="lazy"
           />
         </Col>
         <Col xs={12} lg={5}>
-          <Row className="g-2">
+          <Row className="g-2 h-100">
             {otherPhotos.map((src, i) => (
               <Col xs={6} key={i}>
-                <Image
+                <img
                   src={src}
-                  alt={`${acc.title} foto ${i + 2}`}
-                  fluid
-                  rounded
-                  style={{ width: "100%", height: 200, objectFit: "cover" }}
+                  alt={`${acc.title || "Alojamiento"} foto ${i + 2}`}
+                  className="housing-details__thumb"
                   loading="lazy"
                 />
               </Col>
@@ -215,211 +193,152 @@ function HousingDetailsPage() {
         </Col>
       </Row>
 
-      <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>
-          <Row
-            className="mb-3"
-            style={{ display: "flex", flexDirection: "column" }}
-          >
-            <Col xs={12} md={8}>
-              <h5>
-                {acc.type} in {acc.city}, España
-              </h5>
-              <div>
-                <div style={{ marginBottom: 8 }}>
-                  <strong>
-                    {acc.bedrooms} dormitorios · {acc.beds} camas ·{" "}
-                    {acc.bathrooms} baños
-                  </strong>
-                </div>
+      <Row className="g-4">
+        <Col lg={7}>
+          <div className="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h2 className="h4">
+                {acc.type} {acc.city ? `en ${acc.city}` : ""}
+              </h2>
+              <div className="text-muted">
+                <strong>{acc.maxPeople ?? "?"}</strong> huéspedes ·{" "}
+                <strong>{acc.bedrooms ?? "?"}</strong> dormitorios ·{" "}
+                <strong>{acc.beds ?? "?"}</strong> camas ·{" "}
+                <strong>{acc.bathrooms ?? "?"}</strong> baños
               </div>
-              <p style={{ whiteSpace: "pre-wrap" }}>{acc.description}</p>
-            </Col>
-            <Col xs={12} md={4}>
-              <div className="d-flex align-items-center mb-3">
-                {acc.owner.photo ? (
-                  <img
-                    src={acc.owner.photo}
-                    alt="Foto de perfil"
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      display: "block",
-                      margin: "0 auto",
-                    }}
-                  />
+            </div>
+            <div className="housing-details__host">
+              {acc.owner?.photo ? (
+                <img
+                  src={acc.owner.photo}
+                  alt={ownerUsername}
+                  className="housing-details__host-avatar"
+                />
+              ) : (
+                <div className="housing-details__host-avatar housing-details__host-avatar--initial">
+                  {initial}
+                </div>
+              )}
+              <div className="small text-muted text-center">Anfitrión</div>
+              <div className="small fw-semibold text-center">{ownerUsername}</div>
+            </div>
+          </div>
+
+          <hr />
+
+          {acc.description && (
+            <>
+              <p className="housing-details__description">{acc.description}</p>
+              <hr />
+            </>
+          )}
+
+          <h3 className="h5 mb-3">¿Qué ofrece este alojamiento?</h3>
+          <div className="housing-details__services">
+            {(acc.services ?? []).length === 0 && (
+              <small className="text-muted">No hay servicios listados.</small>
+            )}
+            {(acc.services ?? []).map((s) => (
+              <div key={s} className="housing-details__service" title={s}>
+                {IMG_SERVICE[s] ? (
+                  <img src={IMG_SERVICE[s]} alt="" aria-hidden />
                 ) : (
-                  <div
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "50%",
-                      backgroundColor: "#000",
-                      color: "#fff",
-                      fontSize: "24px",
-                      lineHeight: "60px",
-                      textAlign: "center",
-                      margin: "0 auto",
-                    }}
-                    aria-hidden
-                  >
-                    {initial}
-                  </div>
+                  <span className="housing-details__service-dot" aria-hidden>·</span>
                 )}
-                <div>
-                  <div style={{ fontWeight: 600 }}>
-                    <h6>Anfitrion: {acc.owner?.username}</h6>
-                  </div>
-                </div>
+                <span>{s}</span>
               </div>
-            </Col>
-          </Row>
-          <Row className="mb-4">
-            <Col>
-              <h4 style={{ marginBottom: 16 }}>
-                ¿Qué ofrece este alojamiento?
-              </h4>
-              <div className="d-flex flex-wrap gap-2">
-                {(acc.services ?? []).length === 0 && (
-                  <small>No hay servicios listados.</small>
-                )}
-                {(acc.services ?? []).map((s) => (
-                  <div
-                    key={s}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 12px",
-                      borderRadius: 20,
-                      background: "#f0f0f0",
-                      fontSize: "0.9rem",
-                    }}
-                    title={s}
-                  >
-                    {imagesServices[s] ? (
-                      <img
-                        src={imagesServices[s]}
-                        alt={s}
-                        style={{ width: 28, height: 28, objectFit: "contain" }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
-                          backgroundColor: "#999",
-                          color: "#fff",
-                          fontSize: 14,
-                          lineHeight: "28px",
-                          textAlign: "center",
-                        }}
-                      >
-                        ?
-                      </div>
-                    )}
-                    <span style={{ fontWeight: 500 }}>{s}</span>
-                  </div>
-                ))}
-              </div>
-            </Col>
-          </Row>
-        </div>
-
-        <div
-          className="p-3"
-          style={{
-            border: "1px solid #e6e6e6",
-            borderRadius: 16,
-            boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-          }}
-        >
-          <BookingCard accommodation={acc} onBooked={(r) => console.log(r)} />
-        </div>
-      </div>
-      <hr
-        style={{ width: "70%", margin: "20px auto", border: "1px solid #ccc" }}
-      />
-      <div style={{ textAlign: "center", margin: "20px 0" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "15px",
-            marginBottom: "15px",
-          }}
-        >
-          <img src="/laurel1.png" width="80px" alt="Laurel 1" />
-          <strong style={{ fontSize: "2.5rem", color: "#ffb400" }}>
-            {stars}
-          </strong>
-          <img src="/laurel2.png" width="80px" alt="Laurel 2" />
-        </div>
-
-        {stars > 4.8 ? (
-          <div>
-            <h4>Recomendación del viajero</h4>
-            <p>
-              Este es uno de los Airbnb favoritos de los viajeros, según sus
-              valoraciones.
-            </p>
+            ))}
           </div>
+        </Col>
+
+        <Col lg={5}>
+          <div className="housing-details__booking-wrapper">
+            <BookingCard accommodation={acc} />
+          </div>
+        </Col>
+      </Row>
+
+      <hr className="my-5" />
+
+      <div className="housing-details__reviews">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h2 className="h4 mb-0">
+            {hasReviews ? (
+              <>
+                <span className="housing-details__rating">★ {stars.toFixed(1)}</span>{" "}
+                · {reviews.length} reseña{reviews.length !== 1 ? "s" : ""}
+              </>
+            ) : (
+              "Reseñas"
+            )}
+          </h2>
+          {isLoggedIn ? (
+            <Button
+              variant="outline-dark"
+              size="sm"
+              onClick={() => setShowForm((v) => !v)}
+            >
+              {showForm ? "Cerrar formulario" : "Escribir reseña"}
+            </Button>
+          ) : (
+            <Button variant="outline-dark" size="sm" onClick={openLoginModal}>
+              Inicia sesión para opinar
+            </Button>
+          )}
+        </div>
+
+        {showForm && (
+          <ReviewForm
+            accommodationId={params.accommodationId}
+            onNewReview={handleNewReview}
+          />
+        )}
+
+        {!hasReviews ? (
+          <p className="text-muted fst-italic">
+            Aún no hay reseñas. ¡Sé el primero en opinar!
+          </p>
         ) : (
-          <div>
-            <h4>Valoración en progreso</h4>
-            <p>
-              Este alojamiento está en camino de convertirse en favorito según
-              las valoraciones de los viajeros.
-            </p>
-          </div>
+          <Row className="g-3">
+            {reviews.map((r) => (
+              <Col xs={12} md={6} key={r._id}>
+                <Card className="border-0 shadow-sm h-100">
+                  <Card.Body>
+                    <div className="d-flex align-items-center mb-2 gap-2">
+                      {r.creator?.photo ? (
+                        <img
+                          src={r.creator.photo}
+                          alt={r.creator.username || "Usuario"}
+                          className="review-avatar"
+                        />
+                      ) : (
+                        <div className="review-avatar review-avatar--initial">
+                          {(r.creator?.username || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="fw-semibold">
+                          {r.creator?.username || "Usuario"}
+                        </div>
+                        <div className="small text-muted">
+                          {r.createdAt
+                            ? new Date(r.createdAt).toLocaleDateString("es-ES")
+                            : ""}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mb-1">
+                      <span className="housing-details__rating">★ {r.stars}</span>
+                    </div>
+                    <h6 className="mb-1">{r.title}</h6>
+                    <p className="mb-0 text-muted">{r.text}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
         )}
       </div>
-
-      <div className="mt-4">
-      <h2>Reseñas</h2>
-      {loggedUserId ? (
-        <div className="mb-3">
-          <button
-            className="btn btn-secondary"
-            onClick={() => setShowForm((prev) => !prev)}
-          >
-            {showForm ? "Cerrar formulario" : "Escribir reseña"}
-          </button>
-        </div>
-      ) : (
-        <p>Inicia sesión para escribir una reseña</p>
-      )}
-
-      {showForm && (
-        <ReviewForm
-          accommodationId={params.accommodationId}
-          onNewReview={handleNewReview}
-        />
-      )}
-
-      {reviews.length === 0 ? (
-        <p className="text-muted fst-italic mt-3">
-          Aún no hay reseñas para este alojamiento. ¡Sé el primero en opinar! 💬
-        </p>
-      ) : (
-        reviews.map((r) => (
-          <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
-            <strong>
-              {r.creator && typeof r.creator === "object"
-                ? r.creator.username
-                : r.creator || "Usuario"}
-            </strong>{" "}
-            - {r.stars} ⭐
-            <h6 className="mt-2 mb-1">{r.title}</h6>
-            <p className="mb-0">{r.text}</p>
-          </div>
-        ))
-      )}
-    </div>
     </Container>
   );
 }

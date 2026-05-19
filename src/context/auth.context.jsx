@@ -1,146 +1,127 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useCallback } from "react";
 import service from "../services/service.config";
 import ModalLogin from "../components/ModalLogin";
 
 const AuthContext = createContext();
 
-function AuthWrapper(props) {
+function AuthWrapper({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggedUserId, setLoggedUserId] = useState(null);
   const [isValidatingToken, setIsValidatingToken] = useState(true);
 
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const openLoginModal = () => setShowLoginModal(true);
-  const closeLoginModal = () => setShowLoginModal(false);
+  const openLoginModal = useCallback(() => setShowLoginModal(true), []);
+  const closeLoginModal = useCallback(() => setShowLoginModal(false), []);
 
   const [favorites, setFavorites] = useState([]);
   const [favoritesFull, setFavoritesFull] = useState([]);
 
-  const authenticateUser = async () => {
+  const authenticateUser = useCallback(async () => {
     const authToken = localStorage.getItem("authToken");
-
     if (!authToken) {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
       setIsLoggedIn(false);
       setLoggedUserId(null);
       setIsValidatingToken(false);
       return;
     }
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      const response = await service.get("/auth/verify");
+      const { data } = await service.get("/auth/verify");
       setIsLoggedIn(true);
-      setLoggedUserId(response.data.payload._id);
-      setIsValidatingToken(false);
-    } catch (error) {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      setLoggedUserId(data.payload._id);
+    } catch {
+      localStorage.removeItem("authToken");
       setIsLoggedIn(false);
       setLoggedUserId(null);
+    } finally {
       setIsValidatingToken(false);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    if (isLoggedIn) loadFavorites();
-    else {
-      setFavorites([]);
-      setFavoritesFull([]);
-    }
-  }, [isLoggedIn]);
-
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     try {
-      const res = await service.get("/accommodation/favorites");
-      const data = res.data;
-
-      if (
-        Array.isArray(data) &&
-        data.length > 0 &&
-        typeof data[0] === "object" &&
-        data[0]._id
-      ) {
-        const ids = data.map((d) => d._id);
-        setFavorites(ids);
+      const { data } = await service.get("/accommodation/favorites");
+      if (!Array.isArray(data) || data.length === 0) {
+        setFavorites([]);
+        setFavoritesFull([]);
+        return;
+      }
+      if (typeof data[0] === "object" && data[0]._id) {
+        setFavorites(data.map((d) => d._id));
         setFavoritesFull(data);
         return;
       }
-      if (
-        Array.isArray(data) &&
-        data.length >= 0 &&
-        (data.length === 0 || typeof data[0] === "string")
-      ) {
-        setFavorites(data);
-        if (data.length === 0) {
-          setFavoritesFull([]);
-          return;
-        }
-        const promises = data.map((id) =>
+      // Si por algún motivo viniesen solo IDs, los hidratamos
+      setFavorites(data);
+      const results = await Promise.all(
+        data.map((id) =>
           service
             .get(`/accommodation/${id}`)
             .then((r) => r.data)
             .catch(() => null)
-        );
-        const results = await Promise.all(promises);
-        const valid = results.filter(Boolean);
-        setFavoritesFull(valid);
-        return;
-      }
-      setFavorites([]);
-      setFavoritesFull([]);
+        )
+      );
+      setFavoritesFull(results.filter(Boolean));
     } catch (err) {
-      console.error("Error loadFavorites:", err);
+      console.error("Error cargando favoritos:", err);
       setFavorites([]);
       setFavoritesFull([]);
     }
-  };
+  }, []);
 
-  const toggleFavorite = async (accId) => {
-    try {
-      const isFav = favorites.includes(accId);
+  const toggleFavorite = useCallback(
+    async (accId) => {
+      if (!accId) return;
+      const wasFav = favorites.includes(accId);
 
+      // Optimistic update
       setFavorites((prev) =>
-        isFav ? prev.filter((id) => id !== accId) : [...prev, accId]
+        wasFav ? prev.filter((id) => id !== accId) : [...prev, accId]
       );
 
-      if (isFav) {
+      if (wasFav) {
         setFavoritesFull((prev) => prev.filter((a) => a._id !== accId));
       } else {
         try {
-          const res = await service.get(`/accommodation/${accId}`);
-          if (res?.data) {
-            setFavoritesFull((prev) => [...prev, res.data]);
+          const { data } = await service.get(`/accommodation/${accId}`);
+          if (data?._id) {
+            setFavoritesFull((prev) =>
+              prev.some((a) => a._id === data._id) ? prev : [...prev, data]
+            );
           }
-        } catch (errFetch) {
-          console.warn(
-            "No se pudo traer alojamiento completo tras añadir favorito:",
-            errFetch
-          );
+        } catch (e) {
+          console.warn("No se pudo cargar el alojamiento del favorito:", e);
         }
       }
-      if (isFav) {
-        await service.delete(`/accommodation/favorites/${accId}`);
-      } else {
-        await service.post(`/accommodation/favorites/${accId}`);
+
+      try {
+        if (wasFav) {
+          await service.delete(`/accommodation/favorites/${accId}`);
+        } else {
+          await service.post(`/accommodation/favorites/${accId}`);
+        }
+      } catch (err) {
+        console.error("Error al togglear favorito:", err);
+        setFavorites((prev) =>
+          wasFav ? [...prev, accId] : prev.filter((id) => id !== accId)
+        );
+        loadFavorites();
       }
-    } catch (err) {
-      console.error("Error toggleFavorite:", err);
-      setFavorites((prev) =>
-        prev.includes(accId)
-          ? prev.filter((id) => id !== accId)
-          : [...prev, accId]
-      );
-      setFavoritesFull((prev) =>
-        prev.some((a) => a._id === accId)
-          ? prev.filter((a) => a._id !== accId)
-          : [...prev]
-      );
-    }
-  };
+    },
+    [favorites, loadFavorites]
+  );
 
   useEffect(() => {
     authenticateUser();
-  }, []);
+  }, [authenticateUser]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadFavorites();
+    } else {
+      setFavorites([]);
+      setFavoritesFull([]);
+    }
+  }, [isLoggedIn, loadFavorites]);
 
   const passedContext = {
     isLoggedIn,
@@ -152,31 +133,20 @@ function AuthWrapper(props) {
     favorites,
     favoritesFull,
     toggleFavorite,
+    isValidatingToken,
   };
 
   if (isValidatingToken) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          backgroundColor: "#ffffff",
-        }}
-      >
-        <img
-          src="/airbnb.gif"
-          alt="loading"
-          style={{ width: "450px", height: "450px", objectFit: "cover" }}
-        />
+      <div className="app-loading-screen">
+        <div className="app-loading-spinner" aria-label="Cargando" />
       </div>
     );
   }
 
   return (
     <AuthContext.Provider value={passedContext}>
-      {props.children}
+      {children}
       <ModalLogin show={showLoginModal} handleClose={closeLoginModal} />
     </AuthContext.Provider>
   );

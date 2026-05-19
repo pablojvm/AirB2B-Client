@@ -1,24 +1,19 @@
 import { useState, useContext } from "react";
-import { Card, Button, Modal, Form, FloatingLabel } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { Modal, Form, FloatingLabel, Spinner, Button } from "react-bootstrap";
 import { AuthContext } from "../context/auth.context";
 import service from "../services/service.config";
 import ModalLoginDone from "./ModalLoginDone";
 
 function ModalLogin({ show, handleClose }) {
-  const navigate = useNavigate();
   const { authenticateUser } = useContext(AuthContext);
 
+  const [mode, setMode] = useState("login"); // "login" | "signup"
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
-  const [buttonSignup, setButtonSignup] = useState("login");
+  const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  const handleUsernameChange = (e) => setUsername(e.target.value);
-  const handlePasswordChange = (e) => setPassword(e.target.value);
-  const handleEmailChange = (e) => setEmail(e.target.value);
 
   const resetForm = () => {
     setUsername("");
@@ -28,133 +23,165 @@ function ModalLogin({ show, handleClose }) {
   };
 
   const handleCloseAndReset = () => {
+    if (loading) return;
     resetForm();
     handleClose();
   };
 
-  const toggleSignup = () => {
-    setButtonSignup((prev) => (prev === "login" ? "signup" : "login"));
+  const toggleMode = () => {
+    setMode((m) => (m === "login" ? "signup" : "login"));
     setErrorMessage(null);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setErrorMessage(null);
     try {
       const res = await service.post("/auth/login", { username, password });
       localStorage.setItem("authToken", res.data.authToken);
       await authenticateUser();
       resetForm();
       handleClose();
-      setShowSuccessModal(true)
     } catch (err) {
-      setErrorMessage(err.response?.data.errorMessage || "Algo salió mal");
+      setErrorMessage(
+        err.response?.data?.errorMessage || "No se pudo iniciar sesión"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setErrorMessage(null);
     try {
-      // Creamos usuario
       await service.post("/auth/signup", { username, email, password });
-
-      // Login automático tras signup
       const loginRes = await service.post("/auth/login", { username, password });
       localStorage.setItem("authToken", loginRes.data.authToken);
       await authenticateUser();
-
       resetForm();
       handleClose();
-
-      // Mostramos modal de éxito
       setShowSuccessModal(true);
     } catch (err) {
-      setErrorMessage(err.response?.data.errorMessage || "Algo salió mal");
+      setErrorMessage(
+        err.response?.data?.errorMessage || "No se pudo crear la cuenta"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
-      {/* Modal principal */}
-      <Modal show={show} onHide={handleCloseAndReset} centered>
-        {buttonSignup === "login" ? (
-          <Card className="p-3 shadow-sm border-0">
-            <Card.Title className="text-center mb-4 fw-bold">Inicia Sesión</Card.Title>
-            <Card.Body>
-              <Form onSubmit={handleLogin}>
-                <FloatingLabel controlId="loginUsername" label="Username" className="mb-3">
-                  <Form.Control
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={handleUsernameChange}
-                    required
-                  />
-                </FloatingLabel>
-                <FloatingLabel controlId="loginPassword" label="Password" className="mb-3">
-                  <Form.Control
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    required
-                  />
-                </FloatingLabel>
+      <Modal
+        show={show}
+        onHide={handleCloseAndReset}
+        centered
+        contentClassName="airb2b-modal"
+      >
+        <div className="airb2b-modal__header">
+          <button
+            type="button"
+            className="airb2b-modal__close"
+            onClick={handleCloseAndReset}
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+          <div className="airb2b-modal__title">
+            {mode === "login" ? "Inicia sesión" : "Crea tu cuenta"}
+          </div>
+        </div>
 
-                {errorMessage && <p className="text-danger text-center">{errorMessage}</p>}
+        <Modal.Body className="airb2b-modal__body">
+          <h4 className="airb2b-modal__welcome">
+            {mode === "login"
+              ? "Bienvenido de vuelta a AirB2B"
+              : "Encuentra tu próximo destino"}
+          </h4>
 
-                <Button variant="danger" className="w-100 mb-3" type="submit">Accede!</Button>
-              </Form>
-              <Button variant="secondary" className="w-100" onClick={toggleSignup}>
-                ¿Aún no tienes cuenta?
-              </Button>
-            </Card.Body>
-          </Card>
-        ) : (
-          <Card className="p-3 shadow-sm border-0">
-            <Card.Title className="text-center mb-4 fw-bold">Regístrate</Card.Title>
-            <Card.Body>
-              <Form onSubmit={handleSignup}>
-                <FloatingLabel controlId="signupUsername" label="Username" className="mb-3">
-                  <Form.Control
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={handleUsernameChange}
-                    required
-                  />
-                </FloatingLabel>
-                <FloatingLabel controlId="signupEmail" label="Email" className="mb-3">
-                  <Form.Control
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    required
-                  />
-                </FloatingLabel>
-                <FloatingLabel controlId="signupPassword" label="Password" className="mb-3">
-                  <Form.Control
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    required
-                  />
-                </FloatingLabel>
+          <Form onSubmit={mode === "login" ? handleLogin : handleSignup}>
+            <FloatingLabel
+              controlId="modalUsername"
+              label="Username"
+              className="mb-3"
+            >
+              <Form.Control
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </FloatingLabel>
 
-                {errorMessage && <p className="text-danger text-center">{errorMessage}</p>}
+            {mode === "signup" && (
+              <FloatingLabel controlId="modalEmail" label="Email" className="mb-3">
+                <Form.Control
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </FloatingLabel>
+            )}
 
-                <Button variant="danger" className="w-100 mb-3" type="submit">Crear</Button>
-              </Form>
-              <Button variant="secondary" className="w-100" onClick={toggleSignup}>
-                ¿Ya tienes cuenta?
-              </Button>
-            </Card.Body>
-          </Card>
-        )}
+            <FloatingLabel
+              controlId="modalPassword"
+              label="Contraseña"
+              className="mb-3"
+            >
+              <Form.Control
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
+              />
+            </FloatingLabel>
+
+            {errorMessage && (
+              <p className="text-danger text-center small mb-2">{errorMessage}</p>
+            )}
+
+            <Button
+              type="submit"
+              className="airb2b-btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? (
+                <Spinner animation="border" size="sm" />
+              ) : mode === "login" ? (
+                "Iniciar sesión"
+              ) : (
+                "Crear cuenta"
+              )}
+            </Button>
+          </Form>
+
+          <div className="airb2b-modal__divider">
+            <span>o</span>
+          </div>
+
+          <Button
+            variant="outline-dark"
+            className="airb2b-btn-outline w-100"
+            onClick={toggleMode}
+            disabled={loading}
+          >
+            {mode === "login" ? "Crear cuenta nueva" : "Ya tengo cuenta"}
+          </Button>
+        </Modal.Body>
       </Modal>
 
-      {/* Modal de éxito */}
       <ModalLoginDone
         show={showSuccessModal}
         handleClose={() => setShowSuccessModal(false)}

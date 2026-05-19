@@ -1,94 +1,115 @@
-import { useEffect, useState, useContext } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { AuthContext } from "../context/auth.context";
+import { useEffect, useState } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
 import service from "../services/service.config";
-import { useNavigate, Link } from "react-router-dom";
+import EmptyState, { ChatBubbleIcon } from "../components/EmptyState";
 
 function MyReviewsPage() {
-  const { isLoggedIn } = useContext(AuthContext);
-  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate("/login");
-      return;
-    }
-    fetchMyReviews();
-  }, [isLoggedIn]);
-
-  const fetchMyReviews = async () => {
-    try {
-      const response = await service.get("/review/own");
-      console.log(response.data)
-      setReviews(response.data);
-    } catch (error) {
-      console.log("Error al cargar tus reseñas:", error);
-      navigate("/500");
-    } finally {
-      setLoading(false);
-    }
-  };
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await service.get("/review/own");
+        if (!cancelled)
+          setReviews(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error("Error al cargar tus reseñas:", err);
+        if (!cancelled) setError("No se pudieron cargar tus reseñas.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar esta reseña?")) return;
     try {
       await service.delete(`/review/${id}`);
       setReviews((prev) => prev.filter((r) => r._id !== id));
-    } catch (error) {
-      console.log("Error al eliminar reseña:", error);
+    } catch (err) {
+      console.error(err);
       alert("No se pudo eliminar la reseña.");
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-        <img src="/airbnb.gif" alt="loading" />
-      </div>
-    );
-
-  if (reviews.length === 0)
-    return (
-      <Container className="mt-4">
-        <h2>Mis reseñas</h2>
-        <p>No has escrito ninguna reseña todavía.</p>
+      <Container className="py-5 text-center">
+        <Spinner animation="border" />
       </Container>
     );
+  }
 
   return (
-    <Container className="mt-4">
-      <h2>Mis reseñas</h2>
-      <Row className="mt-3">
-        {reviews.map((r) => (
-          <Col xs={12} md={6} key={r._id} className="mb-3">
-            <Card as={Link} to={`/housingDetails/${r.accommodation._id}`} style={{textDecoration:"none"}}>
-              <Card.Body>
-                <Card.Title>
-                  {r.accommodation?.title ?? "Alojamiento"} - {r.stars} ⭐
-                </Card.Title>
-                <Card.Subtitle className="mb-2 text-muted">
-                  {new Date(r.createdAt).toLocaleDateString()}
-                </Card.Subtitle>
-                <Card.Text>
-                  <strong>{r.title}</strong>
-                  <p>{r.text}</p>
-                </Card.Text>
-                <div className="d-flex justify-content-end gap-2">
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleDelete(r._id)}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+    <Container className="py-4">
+      <h1 className="page-title mb-4">Mis reseñas</h1>
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      {reviews.length === 0 ? (
+        <EmptyState
+          icon={ChatBubbleIcon}
+          title="Aún no has escrito reseñas"
+          text="Cuando hayas viajado podrás compartir tu experiencia con la comunidad."
+          action={
+            <Button as={Link} to="/" className="airb2b-btn-primary">
+              Explorar alojamientos
+            </Button>
+          }
+        />
+      ) : (
+        <Row className="g-3">
+          {reviews.map((r) => (
+            <Col xs={12} md={6} key={r._id}>
+              <Card className="review-card border-0 shadow-sm h-100">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <Card.Title className="mb-0 h6">
+                      <Link
+                        to={`/housingdetails/${r.accommodation?._id || ""}`}
+                        className="text-decoration-none"
+                      >
+                        {r.accommodation?.title ?? "Alojamiento"}
+                      </Link>
+                    </Card.Title>
+                    <span className="housing-details__rating">★ {r.stars}</span>
+                  </div>
+                  <div className="small text-muted mb-2">
+                    {r.createdAt
+                      ? new Date(r.createdAt).toLocaleDateString("es-ES")
+                      : ""}
+                  </div>
+                  <div className="fw-semibold">{r.title}</div>
+                  <p className="mb-2 text-muted">{r.text}</p>
+                  <div className="d-flex justify-content-end">
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(r._id)}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      )}
     </Container>
   );
 }

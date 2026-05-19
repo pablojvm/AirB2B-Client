@@ -1,150 +1,144 @@
 import { useState, useEffect } from "react";
-import { Card, Row, Col, Container, Badge, Alert } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Card,
+  Row,
+  Col,
+  Container,
+  Badge,
+  Alert,
+  Spinner,
+  Button,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
 import service from "../services/service.config";
+import EmptyState, { CalendarIcon, SuitcaseIcon } from "../components/EmptyState";
 
 function MyBookingsPage() {
-  const [houses, setHouses] = useState([]);
-  const [lastHouses, setLastHouses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [pending, setPending] = useState([]);
+  const [past, setPast] = useState([]);
+  const [loadingPending, setLoadingPending] = useState(true);
+  const [loadingPast, setLoadingPast] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    tripsPending();
-    lastTrips();
+    let cancelled = false;
+    (async () => {
+      try {
+        const [pendingRes, pastRes] = await Promise.all([
+          service.get("/booking/tripsPending"),
+          service.get("/booking/lastTrips"),
+        ]);
+        if (cancelled) return;
+        setPending(pendingRes.data.bookings || []);
+        setPast(pastRes.data.bookings || []);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setError("No se pudieron cargar tus reservas.");
+      } finally {
+        if (!cancelled) {
+          setLoadingPending(false);
+          setLoadingPast(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const tripsPending = async () => {
-    try {
-      setLoading(true);
-      const response = await service.get(`/booking/tripsPending`);
-      setHouses(response.data.bookings ?? []);
-    } catch (error) {
-      console.error("Error al obtener reservas pendientes:", error);
-      navigate("/500");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const lastTrips = async () => {
-    try {
-      setLoading(true);
-      const response = await service.get(`/booking/lastTrips`);
-      setLastHouses(response.data.bookings ?? []);
-    } catch (error) {
-      console.error("Error al obtener viajes anteriores:", error);
-      navigate("/500");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading)
+  const statusBadge = (status) => {
+    const map = {
+      pending: { bg: "warning", text: "dark", label: "Pago pendiente" },
+      accepted: { bg: "success", text: "light", label: "Confirmada" },
+      confirmed: { bg: "success", text: "light", label: "Confirmada" },
+      cancelled: { bg: "secondary", text: "light", label: "Cancelada" },
+    };
+    const cfg = map[status] || { bg: "info", text: "light", label: status || "—" };
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-        <img src="/airbnb.gif" alt="loading" />
-      </div>
+      <Badge bg={cfg.bg} text={cfg.text} className="booking-badge">
+        {cfg.label}
+      </Badge>
     );
+  };
+
+  const renderBookingCard = (booking) => {
+    const acc = booking.accommodation || {};
+    const start = booking.start ? new Date(booking.start) : null;
+    const end = booking.end ? new Date(booking.end) : null;
+    const linkTo =
+      booking.status === "pending"
+        ? `/payment/${booking._id}`
+        : `/housingdetails/${acc._id || ""}`;
+    return (
+      <Col key={booking._id} xs={12} sm={6} md={4} lg={3}>
+        <Card as={Link} to={linkTo} className="booking-list-card">
+          <div className="booking-list-card__media">
+            <img
+              src={acc.photos?.[0] || "/imagenpre.webp"}
+              alt={acc.title || "Alojamiento"}
+              loading="lazy"
+            />
+          </div>
+          <Card.Body>
+            <Card.Title className="h6 mb-1">
+              {acc.title || "Alojamiento"}
+            </Card.Title>
+            <div className="small text-muted mb-2">
+              {start ? start.toLocaleDateString("es-ES") : "—"} —{" "}
+              {end ? end.toLocaleDateString("es-ES") : "—"}
+            </div>
+            {statusBadge(booking.status)}
+          </Card.Body>
+        </Card>
+      </Col>
+    );
+  };
 
   return (
-    <div>
-      <Container className="mt-4">
-        <h1 className="mb-4">Tus reservas</h1>
-        {houses.length === 0 && (
-          <Alert variant="info">No tienes reservas pendientes.</Alert>
-        )}
-        <Row className="g-4 justify-content-start">
-          {houses.map((booking, idx) => {
-            const start = new Date(booking.start);
-            const end = new Date(booking.end);
-            const acc = booking.accommodation || {};
-            return (
-              <Col key={booking._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
-                <Card
-                  className="border-0 shadow-sm h-100"
-                  as={Link}
-                  to={
-                    booking.status === "pending"
-                      ? `/payment/${booking._id}`
-                      : `/housingDetails/${acc._id}`
-                  }
-                  style={{
-                    textDecoration: "none",
-                    borderRadius: "20px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <Card.Img
-                    src={acc.photos?.[0] || "/placeholder.png"}
-                    alt={acc.title || "Alojamiento"}
-                    style={{
-                      height: "200px",
-                      objectFit: "cover",
-                      width: "100%",
-                    }}
-                    loading="lazy"
-                  />
-                  <Card.Body className="text-center">
-                    <Card.Title style={{ fontSize: "1rem" }}>
-                      {acc.title || "Alojamiento"}
-                    </Card.Title>
-                    <Card.Text>
-                      Desde {start.toLocaleDateString("es-ES")}
-                    </Card.Text>
-                    <Card.Text>
-                      Hasta {end.toLocaleDateString("es-ES")}
-                    </Card.Text>
+    <Container className="py-4">
+      <h1 className="page-title mb-4">Tus reservas</h1>
+      {error && <Alert variant="danger">{error}</Alert>}
 
-                    <Badge
-                      bg={booking.status === "pending" ? "warning" : "success"}
-                      text={booking.status === "pending" ? "dark" : "light"}
-                      style={{
-                        padding: "0.5em 0.8em",
-                        borderRadius: "20px",
-                        fontSize: "0.85rem",
-                        textTransform: "capitalize",
-                      }}
-                    >
-                      {booking.status === "pending" ? "Pendiente" : "Aceptada"}
-                    </Badge>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-      </Container>
-      <Container className="mt-4">
-        <h1 className="mb-4">Viajes anteriores</h1>
-        {lastHouses.length === 0 && (
-          <Alert>¡Aún no tienes reservas terminadas!</Alert>
+      <section className="mb-5">
+        <h2 className="h5 mb-3">Próximas y pendientes</h2>
+        {loadingPending ? (
+          <div className="py-4 text-center">
+            <Spinner animation="border" />
+          </div>
+        ) : pending.length === 0 ? (
+          <EmptyState
+            icon={CalendarIcon}
+            title="No tienes reservas activas"
+            text="Cuando reserves un alojamiento aparecerá aquí con sus fechas y estado de pago."
+            action={
+              <Button as={Link} to="/" className="airb2b-btn-primary">
+                Buscar alojamientos
+              </Button>
+            }
+          />
+        ) : (
+          <Row className="g-3">{pending.map(renderBookingCard)}</Row>
         )}
-        <Row className="g-4 justify-content-start">
-          {lastHouses.map((booking, idx) => {
-            const acc = booking.accommodation || {};
-            return (
-              <Col key={booking._id || idx} xs={12} sm={6} md={4} lg={3} xl={2}>
-                <Card
-                  as={Link}
-                  to={`/housingdetails/${acc._id}`}
-                  style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
-                >
-                  <Card.Img
-                    src={acc.photos?.[0] || "/placeholder.png"}
-                    alt="Alojamiento"
-                    style={{ height: "200px", objectFit: "cover" }}
-                  />
-                </Card>
-                <div>
-                  <h7>{acc.title}</h7>
-                </div>
-              </Col>
-            );
-          })}
-        </Row>
-      </Container>
-    </div>
+      </section>
+
+      <section>
+        <h2 className="h5 mb-3">Viajes anteriores</h2>
+        {loadingPast ? (
+          <div className="py-4 text-center">
+            <Spinner animation="border" />
+          </div>
+        ) : past.length === 0 ? (
+          <EmptyState
+            icon={SuitcaseIcon}
+            title="Aún no tienes viajes terminados"
+            text="Aquí guardaremos tu historial de estancias."
+            variant="muted"
+          />
+        ) : (
+          <Row className="g-3">{past.map(renderBookingCard)}</Row>
+        )}
+      </section>
+    </Container>
   );
 }
 

@@ -3,35 +3,37 @@ import { Link } from "react-router-dom";
 
 function ModalHost({ show, handleClose }) {
   return (
-    <Modal show={show} onHide={handleClose}>
-      <Modal.Header style={{ justifyContent: "center" }} closeButton>
-        <Modal.Title style={{ textAlign: "center", width: "100%" }}>
-          ¿Quieres crear un anuncio?
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <Button
-          variant="light"
-          as={Link}
-          to={"/newHouse"}
+    <Modal show={show} onHide={handleClose} centered contentClassName="airb2b-modal">
+      <div className="airb2b-modal__header">
+        <button
+          type="button"
+          className="airb2b-modal__close"
           onClick={handleClose}
+          aria-label="Cerrar"
         >
-          <img src="/casa.png" width="300px" />
-          <h6>Sube tu alojamiento!</h6>
+          ×
+        </button>
+        <div className="airb2b-modal__title">Conviértete en anfitrión</div>
+      </div>
+      <Modal.Body className="airb2b-modal__body text-center">
+        <img
+          src="/casa.png"
+          alt="Crear anuncio"
+          style={{ width: 200, maxWidth: "60%", marginBottom: 16 }}
+        />
+        <p className="text-muted">
+          Publica tu espacio en AirB2B. Te guiamos paso a paso para que tardes
+          unos pocos minutos.
+        </p>
+        <Button
+          as={Link}
+          to="/newHouse"
+          onClick={handleClose}
+          className="airb2b-btn-primary w-100"
+        >
+          Empezar ahora
         </Button>
       </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>
-          Close
-        </Button>
-      </Modal.Footer>
     </Modal>
   );
 }

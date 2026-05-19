@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Container,
   Row,
@@ -7,7 +7,7 @@ import {
   Card,
   Button,
   Spinner,
-  Image,
+  Alert,
 } from "react-bootstrap";
 import PaymentIntent from "../components/PaymentIntent";
 import service from "../services/service.config";
@@ -15,130 +15,149 @@ import service from "../services/service.config";
 function formatCurrency(val, currency = "EUR") {
   const amount = Number(val);
   if (Number.isNaN(amount)) return `${val ?? ""} ${currency}`;
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency }).format(
-    amount
-  );
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency,
+  }).format(amount);
 }
 
 function PaymentPage() {
   const { bookingId } = useParams();
+  const navigate = useNavigate();
   const [productDetails, setProductDetails] = useState(null);
   const [showPaymentIntent, setShowPaymentIntent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getDetails();
-  }, []);
-
-  const getDetails = async () => {
-    try {
-      const response = await service.get(`/booking/${bookingId}`);
-      const booking = response.data?.booking ?? response.data;
-      console.log("Booking recibido:", booking);
-      setProductDetails(booking);
-    } catch (error) {
-      console.error("Error al obtener los detalles de la reserva:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await service.get(`/booking/${bookingId}`);
+        const booking = response.data?.booking ?? response.data;
+        if (!cancelled) setProductDetails(booking);
+      } catch (err) {
+        console.error("Error al obtener los detalles de la reserva:", err);
+        if (!cancelled)
+          setError(
+            err.response?.data?.message ||
+              "No se pudieron cargar los detalles de la reserva."
+          );
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookingId]);
 
   if (isLoading) {
     return (
-      <Container
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "80vh" }}
-      >
+      <Container className="d-flex justify-content-center align-items-center py-5" style={{ minHeight: "60vh" }}>
         <Spinner animation="border" />
       </Container>
     );
   }
 
-  if (!productDetails) {
+  if (error || !productDetails) {
     return (
-      <Container className="text-center mt-5">
-        <h3>No se han encontrado los detalles de la reserva</h3>
+      <Container className="py-5 text-center">
+        <Alert variant="warning">
+          {error || "No se han encontrado los detalles de la reserva"}
+        </Alert>
+        <Button variant="outline-dark" onClick={() => navigate("/myBookings")}>
+          Ir a mis reservas
+        </Button>
       </Container>
     );
   }
 
-  const accommodation = productDetails.accommodation;
-  const startRaw = productDetails.start;
-  const endRaw = productDetails.end;
+  const accommodation = productDetails.accommodation || {};
   const totalPrice = productDetails.cost;
-  const location = accommodation.city;
-  const photoUrl = accommodation.photos?.[0];
+  const photoUrl = accommodation.photos?.[0] || "/imagenpre.webp";
 
-  const formattedStart = startRaw
-    ? new Date(startRaw).toLocaleDateString()
+  const formattedStart = productDetails.start
+    ? new Date(productDetails.start).toLocaleDateString("es-ES")
     : "—";
-  const formattedEnd = endRaw ? new Date(endRaw).toLocaleDateString() : "—";
+  const formattedEnd = productDetails.end
+    ? new Date(productDetails.end).toLocaleDateString("es-ES")
+    : "—";
+
+  const alreadyPaid =
+    productDetails.status === "accepted" ||
+    productDetails.status === "confirmed";
 
   return (
-    <Container className="py-5">
+    <Container className="py-4 payment-page">
       <Row className="justify-content-center">
-        <Col md={10} lg={8}>
-          <h2 className="mb-4 text-center fw-bold">Finaliza tu reserva</h2>
+        <Col md={11} lg={10}>
+          <h1 className="page-title mb-4 text-center">Finaliza tu reserva</h1>
 
           <Row className="g-4">
             <Col md={6}>
               <Card className="border-0 shadow-sm rounded-4 overflow-hidden">
-                <div style={{ width: "100%", height: 200, overflow: "hidden" }}>
-                  <Image
+                <div className="payment-page__media">
+                  <img
                     src={photoUrl}
                     alt={accommodation?.title || "Alojamiento"}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
                   />
                 </div>
                 <Card.Body>
                   <Card.Title className="fw-bold">
-                    {accommodation?.title ??
-                      productDetails?.title ??
-                      "Alojamiento"}
+                    {accommodation?.title ?? "Alojamiento"}
                   </Card.Title>
-
-                  <Card.Text className="text-muted mb-1">
-                    <strong>Fechas:</strong> {formattedStart} - {formattedEnd}
+                  {accommodation?.city && (
+                    <Card.Text className="text-muted mb-2">
+                      {accommodation.city}
+                    </Card.Text>
+                  )}
+                  <hr />
+                  <Card.Text className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Entrada</span>
+                    <strong>{formattedStart}</strong>
                   </Card.Text>
-
-                  <Card.Text className="mb-1">
-                    <strong>Ubicación:</strong> {location}
+                  <Card.Text className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Salida</span>
+                    <strong>{formattedEnd}</strong>
                   </Card.Text>
-
-                  <Card.Text className="mb-1">
-                    <strong>Precio total:</strong> {formatCurrency(totalPrice)}
+                  <Card.Text className="d-flex justify-content-between mb-0">
+                    <span className="text-muted">Huéspedes</span>
+                    <strong>{productDetails.guests ?? "—"}</strong>
+                  </Card.Text>
+                  <hr />
+                  <Card.Text className="d-flex justify-content-between fw-bold fs-5 mb-0">
+                    <span>Total</span>
+                    <span>{formatCurrency(totalPrice)}</span>
                   </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
+
             <Col md={6}>
               <Card className="border-0 shadow-sm rounded-4 p-4">
-                <h5 className="fw-semibold mb-3 text-center">Método de pago</h5>
+                <h5 className="fw-semibold mb-3 text-center">Pago</h5>
 
-                {showPaymentIntent === false ? (
-                  <div className="d-flex justify-content-center">
+                {alreadyPaid ? (
+                  <Alert variant="success" className="mb-0 text-center">
+                    Esta reserva ya está pagada. ¡Disfruta del viaje!
+                  </Alert>
+                ) : !showPaymentIntent ? (
+                  <div className="d-grid">
                     <Button
-                      variant="dark"
-                      size="lg"
-                      className="rounded-pill px-5"
+                      className="airb2b-btn-primary"
                       onClick={() => setShowPaymentIntent(true)}
                     >
-                      Proceder al pago
+                      Proceder al pago seguro
                     </Button>
+                    <small className="text-muted text-center mt-2">
+                      Pago seguro procesado por Stripe.
+                    </small>
                   </div>
                 ) : (
                   <PaymentIntent
                     productDetails={{
-                      price: totalPrice,
                       product: productDetails._id ?? bookingId,
-                      buyer:
-                        productDetails.buyer ??
-                        productDetails.user ??
-                        productDetails.userId,
                     }}
                   />
                 )}

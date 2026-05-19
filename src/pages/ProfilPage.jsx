@@ -1,310 +1,154 @@
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Button, Card, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Button, Spinner, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import service from "../services/service.config";
-import { useNavigate, Link } from "react-router-dom";
+import HousingCard from "../components/HousingCard";
+import EmptyState, { SuitcaseIcon } from "../components/EmptyState";
 
 function ProfilePage() {
-  const navigate = useNavigate();
-
-  const [section, setSection] = useState("sobreMi");
-  const [number, setNumber] = useState(0);
-  const [loadingNumber, setLoadingNumber] = useState(true);
+  const [section, setSection] = useState("about");
   const [profile, setProfile] = useState(null);
+  const [ownCount, setOwnCount] = useState(0);
   const [trips, setTrips] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadingTrips, setLoadingTrips] = useState(true);
   const [housesTrips, setHousesTrips] = useState([]);
-  const [loadingHouses, setLoadingHouses] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getNumberHouses();
-    getProfile();
-    fetchTripsCount();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const [profileRes, ownRes, tripsRes] = await Promise.all([
+          service.get("/user/profile"),
+          service.get("/accommodation/own"),
+          service.get("/booking/trips"),
+        ]);
+        if (cancelled) return;
+        setProfile(profileRes.data || null);
+        setOwnCount(Array.isArray(ownRes.data) ? ownRes.data.length : 0);
 
-  const getNumberHouses = async () => {
-    try {
-      setLoadingNumber(true);
-      const response = await service.get("/accommodation/own");
-      const payload = response.data;
-      const count = Array.isArray(payload)
-        ? payload.length
-        : typeof payload === "number"
-        ? payload
-        : 0;
-      setNumber(count);
-    } catch (error) {
-      console.error("Error fetching number houses:", error);
-      setNumber(0);
-    } finally {
-      setLoadingNumber(false);
-    }
-  };
-
-  const getProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await service.get("/user/profile");
-      setProfile(response.data ?? null);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      navigate("/500");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTripsCount = async () => {
-    try {
-      setLoadingTrips(true);
-      setLoadingHouses(true);
-      const response = await service.get("/booking/trips");
-      const { count, accommodations, bookings } = response.data ?? {};
-      setTrips(typeof count === "number" ? count : bookings?.length ?? 0);
-      let housesArray = [];
-      if (Array.isArray(accommodations) && accommodations.length > 0) {
-        housesArray = accommodations;
-      } else if (Array.isArray(bookings) && bookings.length > 0) {
-        const raw = bookings.map((b) => b.accommodation).filter(Boolean);
-        const byId = new Map();
-        raw.forEach((a) => byId.set(String(a._id), a));
-        housesArray = Array.from(byId.values());
-      } else {
-        housesArray = [];
+        const { count, accommodations, bookings } = tripsRes.data || {};
+        setTrips(typeof count === "number" ? count : bookings?.length ?? 0);
+        let housesArray = [];
+        if (Array.isArray(accommodations) && accommodations.length > 0) {
+          housesArray = accommodations;
+        } else if (Array.isArray(bookings)) {
+          const map = new Map();
+          bookings.forEach((b) => {
+            if (b.accommodation?._id)
+              map.set(String(b.accommodation._id), b.accommodation);
+          });
+          housesArray = Array.from(map.values());
+        }
+        setHousesTrips(housesArray);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setError("No se pudo cargar tu perfil.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setHousesTrips(housesArray);
-    } catch (error) {
-      console.error("Error fetching trips count:", error);
-      setTrips(0);
-      setHousesTrips([]);
-    } finally {
-      setLoadingTrips(false);
-      setLoadingHouses(false);
-    }
-  };
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const initial = profile?.username
     ? profile.username.charAt(0).toUpperCase()
     : "?";
 
+  if (loading) {
+    return (
+      <Container className="py-5 text-center">
+        <Spinner animation="border" />
+      </Container>
+    );
+  }
+
   return (
-    <Container fluid style={{ padding: "40px" }}>
-      <Row>
-        <Col md={3} style={{ borderRight: "1px solid #ddd" }}>
-          <ul className="list-unstyled">
-            <li
-              onClick={() => setSection("sobreMi")}
-              style={{
-                padding: "10px 0",
-                fontWeight: section === "sobreMi" ? "bold" : "normal",
-                cursor: "pointer",
-              }}
-            >
-              Sobre mí
-            </li>
-            <li
-              onClick={() => setSection("viajes")}
-              style={{
-                padding: "10px 0",
-                fontWeight: section === "viajes" ? "bold" : "normal",
-                cursor: "pointer",
-              }}
-            >
-              Viajes anteriores
-            </li>
-          </ul>
-        </Col>
+    <Container className="profile-page py-4">
+      {error && <Alert variant="danger">{error}</Alert>}
 
-        <Col md={9}>
-          {loading ? (
-            <div style={{ padding: 40, textAlign: "center" }}>
-              <Spinner animation="border" />
+      <div className="profile-tabs-bar">
+        <button
+          type="button"
+          onClick={() => setSection("about")}
+          className={`profile-tab ${section === "about" ? "is-active" : ""}`}
+        >
+          Sobre mí
+        </button>
+        <button
+          type="button"
+          onClick={() => setSection("trips")}
+          className={`profile-tab ${section === "trips" ? "is-active" : ""}`}
+        >
+          Viajes anteriores
+        </button>
+      </div>
+
+      {section === "about" && (
+        <div className="profile-about mt-4">
+          <div className="profile-card profile-card--center-content">
+            <div className="profile-card__avatar">
+              {profile?.photo ? (
+                <img src={profile.photo} alt="Foto de perfil" />
+              ) : (
+                <div className="profile-card__avatar--initial">{initial}</div>
+              )}
             </div>
+            <div className="profile-card__info">
+              <h2 className="mb-1">{profile?.username || "Usuario"}</h2>
+              {profile?.email && (
+                <div className="text-muted small mb-3">{profile.email}</div>
+              )}
+              <div className="profile-card__stats">
+                <div>
+                  <strong>{trips}</strong>
+                  <span>viajes</span>
+                </div>
+                <div>
+                  <strong>{ownCount}</strong>
+                  <span>alojamientos</span>
+                </div>
+              </div>
+              <Button
+                as={Link}
+                to="/editProfile"
+                className="airb2b-btn-primary mt-3"
+              >
+                Editar perfil
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {section === "trips" && (
+        <div className="mt-4">
+          <h2 className="h4 mb-3">Viajes anteriores</h2>
+          {housesTrips.length === 0 ? (
+            <EmptyState
+              icon={SuitcaseIcon}
+              title="Aún no has hecho ningún viaje"
+              text="Empieza a explorar destinos increíbles en AirB2B."
+              action={
+                <Button as={Link} to="/" className="airb2b-btn-primary">
+                  Explorar alojamientos
+                </Button>
+              }
+            />
           ) : (
-            <>
-              {section === "sobreMi" && (
-                <div>
-                  <h2>Sobre mí</h2>
-                  <Card
-                    style={{
-                      width: "100%",
-                      maxWidth: "300px",
-                      padding: "20px",
-                      marginTop: "20px",
-                    }}
-                  >
-                    <div
-                      className="d-flex"
-                      style={{
-                        gap: 20,
-                        alignItems: "center",
-                        justifyContent: "space-around",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 16,
-                          alignItems: "center",
-                          flexDirection: "column",
-                        }}
-                      >
-                        <div>
-                          {!profile?.photo ? (
-                            <div
-                              style={{
-                                width: "60px",
-                                height: "60px",
-                                borderRadius: "50%",
-                                backgroundColor: "#000",
-                                color: "#fff",
-                                fontSize: "24px",
-                                lineHeight: "60px",
-                                textAlign: "center",
-                                margin: "0 auto",
-                              }}
-                              aria-hidden
-                            >
-                              {initial}
-                            </div>
-                          ) : (
-                            <img
-                              src={profile.photo}
-                              alt="Foto de perfil"
-                              style={{
-                                width: "60px",
-                                height: "60px",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                display: "block",
-                              }}
-                            />
-                          )}
-                        </div>
-
-                        <div>
-                          <h4 style={{ margin: 0, textAlign: "center" }}>
-                            {profile?.username || "Usuario"}
-                          </h4>
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 24,
-                          alignItems: "center",
-                        }}
-                      >
-                        <div style={{ textAlign: "center" }}>
-                          {loadingTrips ? (
-                            <Spinner animation="border" size="sm" />
-                          ) : (
-                            <>
-                              <strong
-                                style={{ display: "block", fontSize: 18 }}
-                              >
-                                {trips}
-                              </strong>
-                              <div
-                                style={{ fontSize: "0.9rem", color: "#666" }}
-                              >
-                                viajes realizados
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        <div style={{ textAlign: "center" }}>
-                          {loadingNumber ? (
-                            <Spinner animation="border" size="sm" />
-                          ) : (
-                            <>
-                              <strong
-                                style={{ display: "block", fontSize: 18 }}
-                              >
-                                {number}
-                              </strong>
-                              <div
-                                style={{ fontSize: "0.9rem", color: "#666" }}
-                              >
-                                alojamientos
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Button
-                    as={Link}
-                    to="/editProfile"
-                    variant="danger"
-                    style={{ marginTop: "20px" }}
-                  >
-                    Cambia tu foto
-                  </Button>
-                </div>
-              )}
-
-              {section === "viajes" && (
-                <Container className="mt-4">
-                  <h2 className="mb-4">Viajes anteriores</h2>
-
-                  {loadingHouses ? (
-                    <div className="text-center">
-                      <Spinner animation="border" />
-                    </div>
-                  ) : Array.isArray(housesTrips) && housesTrips.length > 0 ? (
-                    <Row className="g-4 justify-content-start">
-                      {housesTrips.map((acc) => (
-                        <Col
-                          key={acc?._id ?? Math.random()}
-                          xs={12}
-                          sm={6}
-                          md={4}
-                          lg={3}
-                          xl={2}
-                        >
-                          <Card
-                  as={Link}
-                  to={`/housingdetails/${acc._id}`}
-                  style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
-                >
-                  <Card.Img
-                    src={acc.photos?.[0] || "/placeholder.png"}
-                    alt="Alojamiento"
-                    style={{ height: "200px", objectFit: "cover" }}
-                  />
-                </Card>
-                <div>
-                  <h7>{acc.title}</h7>
-                </div>
-                        </Col>
-                      ))}
-                    </Row>
-                  ) : (
-                    <div className="text-center mt-4">
-                      <img src="/maleta.png" width="100" alt="Sin viajes" />
-                      <h4 className="mt-3">Aún no has hecho ningún viaje</h4>
-                      <Button
-                        as={Link}
-                        to="/"
-                        variant="outline-dark"
-                        className="mt-3"
-                      >
-                        Explorar alojamientos
-                      </Button>
-                    </div>
-                  )}
-                </Container>
-              )}
-            </>
+            <Row className="g-4">
+              {housesTrips.map((acc) => (
+                <Col key={acc._id} xs={12} sm={6} md={4} lg={3}>
+                  <HousingCard acc={acc} showFavorite={false} />
+                </Col>
+              ))}
+            </Row>
           )}
-        </Col>
-      </Row>
+        </div>
+      )}
     </Container>
   );
 }

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import {
   Button,
   Form,
@@ -6,13 +7,109 @@ import {
   Spinner,
   Alert,
   ProgressBar,
+  Container,
+  Row,
+  Col,
 } from "react-bootstrap";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
-import { useState, useEffect, useRef } from "react";
-import ClickMarker from "../components/ClickMarker";
-import service from "../services/service.config";
 import { useNavigate } from "react-router-dom";
 import L from "leaflet";
+import ClickMarker from "../components/ClickMarker";
+import service from "../services/service.config";
+
+const TYPES = {
+  Apartment: "/1apartment.png",
+  House: "/1house.png",
+  Cabin: "/1cabin.png",
+  Bungalow: "/1bungalow.png",
+  Guesthouse: "/1guesthouse.png",
+  Hotel: "/1hotel.png",
+  "Bed and Breakfast": "/1bedbreakfast.png",
+  "Farm stay": "/1farm.png",
+  Boat: "/1boat.png",
+  Treehouse: "/1treehouse.png",
+  Castle: "/1castle.png",
+  "Camper/RV": "/1camper.png",
+};
+
+const SERVICES = {
+  "Wi-Fi": "/wifi.png",
+  "Air conditioning": "/aire.png",
+  Heating: "/radiador.png",
+  TV: "/tv.png",
+  Washer: "/washer.png",
+  Dryer: "/dryer.png",
+  Kitchen: "/kitchen.png",
+  "Private bathroom": "/bathroom.png",
+  "Hair dryer": "/hairDryer.png",
+  Shampoo: "/shampoo.png",
+  Towels: "/towels.png",
+  Iron: "/iron.png",
+  Parking: "/parking.png",
+  Pool: "/pool.png",
+  Gym: "/gym.png",
+  "Hot tub": "/jacuzzi.png",
+  Balcony: "/balcon.png",
+  Garden: "/jardin.png",
+  "BBQ grill": "/barbacoa.png",
+  Fireplace: "/chimenea.png",
+  "Pet friendly": "/pet.png",
+  "Smoke detector": "/detector.png",
+  "First aid kit": "/botiquin.png",
+  Workspace: "/workspace.png",
+  "Breakfast included": "/desayuno.png",
+  "24h check-in": "/checking.png",
+};
+
+const customMarker = L.icon({
+  iconUrl: "/marker.png",
+  iconSize: [48, 76],
+  iconAnchor: [24, 76],
+  popupAnchor: [0, -76],
+});
+
+function RecenterMap({ lat, lng }) {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lng) map.setView([lat, lng], 12);
+  }, [lat, lng, map]);
+  return null;
+}
+
+function Stepper({ label, value, onChange, min = 0 }) {
+  return (
+    <div className="stepper-row">
+      <span className="stepper-row__label">{label}</span>
+      <InputGroup className="stepper-row__group">
+        <Button
+          variant="outline-secondary"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          type="button"
+          aria-label={`Disminuir ${label}`}
+          className="stepper-btn"
+        >
+          –
+        </Button>
+        <FormControl
+          type="number"
+          value={value}
+          min={min}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="stepper-input"
+        />
+        <Button
+          variant="outline-secondary"
+          onClick={() => onChange(value + 1)}
+          type="button"
+          aria-label={`Aumentar ${label}`}
+          className="stepper-btn"
+        >
+          +
+        </Button>
+      </InputGroup>
+    </div>
+  );
+}
 
 function NewHousePage() {
   const navigate = useNavigate();
@@ -20,13 +117,13 @@ function NewHousePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 9;
 
-  const [mapPosition, setMapPosition] = useState([40.4169, -3.7034]);
+  const [mapPosition] = useState([40.4169, -3.7034]);
   const [cityCoords, setCityCoords] = useState(null);
   const [clickedPosition, setClickedPosition] = useState(null);
-  const [value1, setValue1] = useState(1);
-  const [value2, setValue2] = useState(1);
-  const [value3, setValue3] = useState(1);
-  const [value4, setValue4] = useState(1);
+  const [people, setPeople] = useState(1);
+  const [bedrooms, setBedrooms] = useState(1);
+  const [beds, setBeds] = useState(1);
+  const [bathrooms, setBathrooms] = useState(1);
   const [imageUrls, setImageUrls] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [typeHouse, setTypeHouse] = useState("");
@@ -41,40 +138,22 @@ function NewHousePage() {
   const [submitSuccess, setSubmitSuccess] = useState("");
   const mapRef = useRef(null);
 
-  const handleIncrease1 = () => setValue1((v) => v + 1);
-  const handleDecrease1 = () => setValue1((v) => (v > 0 ? v - 1 : 0));
-
-  const handleIncrease2 = () => setValue2((v) => v + 1);
-  const handleDecrease2 = () => setValue2((v) => (v > 0 ? v - 1 : 0));
-
-  const handleIncrease3 = () => setValue3((v) => v + 1);
-  const handleDecrease3 = () => setValue3((v) => (v > 0 ? v - 1 : 0));
-
-  const handleIncrease4 = () => setValue4((v) => v + 1);
-  const handleDecrease4 = () => setValue4((v) => (v > 0 ? v - 1 : 0));
-
   const handleFileUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setIsUploading(true);
-
     try {
-      const uploadedUrls = [];
+      const uploaded = [];
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const uploadData = new FormData();
-        uploadData.append("image", file);
-
-        const response = await service.post("/upload", uploadData);
-        if (response.data.imageUrl) uploadedUrls.push(response.data.imageUrl);
-        else if (response.data.imageUrls)
-          uploadedUrls.push(...response.data.imageUrls);
-        else console.warn("Respuesta inesperada de /upload:", response.data);
+        const data = new FormData();
+        data.append("image", files[i]);
+        const response = await service.post("/upload", data);
+        if (response.data.imageUrl) uploaded.push(response.data.imageUrl);
       }
-      setImageUrls((prev) => [...prev, ...uploadedUrls]);
-    } catch (error) {
-      console.error("Error al subir las imágenes:", error);
-      setSubmitError("Error subiendo imágenes. Revisa la consola.");
+      setImageUrls((prev) => [...prev, ...uploaded]);
+    } catch (err) {
+      console.error("Error al subir las imágenes:", err);
+      setSubmitError("Error subiendo imágenes.");
     } finally {
       setIsUploading(false);
     }
@@ -84,57 +163,32 @@ function NewHousePage() {
     setImageUrls((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const toggleService = (serviceName) => {
+  const toggleService = (s) => {
     setSelectedServices((prev) => {
-      const copy = new Set(prev);
-      if (copy.has(serviceName)) copy.delete(serviceName);
-      else copy.add(serviceName);
-      return copy;
+      const next = new Set(prev);
+      next.has(s) ? next.delete(s) : next.add(s);
+      return next;
     });
   };
 
-  const typesHouses = {
-    Apartment: "/1apartment.png",
-    House: "/1house.png",
-    Cabin: "/1cabin.png",
-    Bungalow: "/1bungalow.png",
-    Guesthouse: "/1guesthouse.png",
-    Hotel: "/1hotel.png",
-    "Bed and Breakfast": "/1bedbreakfast.png",
-    "Farm stay": "/1farm.png",
-    Boat: "/1boat.png",
-    Treehouse: "/1treehouse.png",
-    Castle: "/1castle.png",
-    "Camper/RV": "/1camper.png",
-  };
-
-  const services = {
-    "Wi-Fi": "/wifi.png",
-    "Air conditioning": "/aire.png",
-    Heating: "/radiador.png",
-    TV: "/tv.png",
-    Washer: "/washer.png",
-    Dryer: "/dryer.png",
-    Kitchen: "/kitchen.png",
-    "Private bathroom": "/bathroom.png",
-    "Hair dryer": "/hairDryer.png",
-    Shampoo: "/shampoo.png",
-    Towels: "/towels.png",
-    Iron: "/iron.png",
-    Parking: "/parking.png",
-    Pool: "/pool.png",
-    Gym: "/gym.png",
-    "Hot tub": "/jacuzzi.png",
-    Balcony: "/balcon.png",
-    Garden: "/jardin.png",
-    "BBQ grill": "/barbacoa.png",
-    Fireplace: "/chimenea.png",
-    "Pet friendly": "/pet.png",
-    "Smoke detector": "/detector.png",
-    "First aid kit": "/botiquin.png",
-    Workspace: "/workspace.png",
-    "Breakfast included": "/desayuno.png",
-    "24h check-in": "/checking.png",
+  const handleCitySearch = async () => {
+    if (!city) return;
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          `${city}, Spain`
+        )}`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setCityCoords([parseFloat(lat), parseFloat(lon)]);
+      } else {
+        alert("Ciudad no encontrada");
+      }
+    } catch (err) {
+      console.error("Error buscando ciudad:", err);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -145,6 +199,8 @@ function NewHousePage() {
     if (!typeHouse) return setSubmitError("Selecciona el tipo de alojamiento.");
     if (!address || address.trim().length < 3)
       return setSubmitError("Introduce una dirección válida.");
+    if (!city || city.trim().length < 2)
+      return setSubmitError("Indica la ciudad.");
     if (!title || title.trim().length < 5)
       return setSubmitError("Pon un título (mínimo 5 caracteres).");
     if (!description || description.trim().length < 10)
@@ -160,83 +216,41 @@ function NewHousePage() {
 
     const body = {
       title: title.trim(),
-      maxPeople: Number(value1),
+      maxPeople: Number(people),
       type: typeHouse,
-      beds: Number(value3),
-      bedrooms: Number(value2),
-      bathrooms: Number(value4),
+      beds: Number(beds),
+      bedrooms: Number(bedrooms),
+      bathrooms: Number(bathrooms),
       livingroom: 0,
       services: Array.from(selectedServices),
       cost: Number(price),
       photos: imageUrls,
       description: description.trim(),
       location: locationPayload,
-      city: city,
+      city: city.trim(),
     };
 
     try {
       setIsSubmitting(true);
-      const response = await service.post("/accommodation", body);
+      await service.post("/accommodation", body);
       setSubmitSuccess("Alojamiento creado correctamente.");
-      const created = response.data;
-      const newId = created._id || created.id;
-      navigate("/myhouses");
-    } catch (error) {
-      console.error("Error creando alojamiento:", error);
+      navigate("/myHouses");
+    } catch (err) {
+      console.error("Error creando alojamiento:", err);
       const msg =
-        error?.response?.data?.message ||
-        error?.response?.data?.errorMessage ||
-        null;
-      setSubmitError(
-        msg || "Error al crear el alojamiento. Revisa la consola."
-      );
+        err?.response?.data?.message ||
+        err?.response?.data?.errorMessage ||
+        "Error al crear el alojamiento.";
+      setSubmitError(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  function RecenterMap({ lat, lng }) {
-    const map = useMap();
-    useEffect(() => {
-      if (lat && lng) {
-        map.setView([lat, lng], 12);
-      }
-    }, [lat, lng, map]);
-    return null;
-  }
-
-  const handleCitySearch = async () => {
-    if (!city) return;
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          city + ", Spain"
-        )}`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        setCityCoords([parseFloat(lat), parseFloat(lon)]);
-      } else {
-        alert("Ciudad no encontrada");
-      }
-    } catch (error) {
-      console.error("Error buscando ciudad:", error);
-    }
-  };
-
-  const customMarker = L.icon({
-    iconUrl: "/marker.png",
-    iconSize: [60, 95],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
-  });
-
   const goNext = () => {
     setSubmitError("");
     if (currentStep < totalSteps) setCurrentStep((s) => s + 1);
   };
-
   const goBack = () => {
     setSubmitError("");
     if (currentStep > 1) setCurrentStep((s) => s - 1);
@@ -246,544 +260,327 @@ function NewHousePage() {
   const progress = Math.round((currentStep / totalSteps) * 100);
 
   return (
-    <div style={{ paddingBottom: 40 }}>
-      <form onSubmit={handleSubmit}>
-        <div style={{ padding: "20px 40px" }}>
-          <ProgressBar now={progress} label={`${currentStep}/${totalSteps}`} />
-        </div>
+    <div className="new-house-page">
+      <div className="new-house-page__progress">
+        <Container>
+          <ProgressBar now={progress} className="new-house-page__bar" />
+          <div className="new-house-page__step-text">
+            Paso {currentStep} de {totalSteps}
+          </div>
+        </Container>
+      </div>
 
+      <Container className="new-house-page__form" as="form" onSubmit={handleSubmit}>
         {currentStep === 1 && (
-          <section
-            id="firstPage"
-            style={{
-              padding: "20px 40px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-around",
-                padding: "40px",
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ textAlign: "center", marginBottom: "20px" }}>
-                <h1
-                  style={{
-                    fontSize: "2rem",
-                    marginBottom: "10px",
-                  }}
-                >
-                  Empezar en AirB2B es muy sencillo
-                </h1>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "20px",
-                  maxWidth: "800px",
-                  width: "100%",
-                }}
-              >
-                {[
-                  {
-                    title: "1. Describe tu espacio",
-                    text: "Añade algunos datos básicos, como dónde está y cuántos viajeros pueden quedarse.",
-                    img: "/foto3.png",
-                  },
-                  {
-                    title: "2. Añade todos los detalles",
-                    text: "Añade al menos cinco fotos, un título y una descripción. Te echaremos una mano.",
-                    img: "/foto2.png",
-                  },
-                  {
-                    title: "3. Últimos retoques y publícalo",
-                    text: "Elige un precio inicial, verifica algunos detalles y publica tu anuncio.",
-                    img: "/foto1.png",
-                  },
-                ].map((step, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "15px",
-                    }}
-                  >
-                    <div style={{ flex: "1 1 300px", minWidth: "250px" }}>
-                      <h3 style={{ marginBottom: "5px" }}>{step.title}</h3>
-                      <p style={{ margin: 0 }}>{step.text}</p>
-                    </div>
-                    <img
-                      src={step.img}
-                      width="200px"
-                      alt={`Paso ${index + 1}`}
-                      style={{
-                        flex: "0 0 auto",
-                        maxWidth: "100%",
-                        height: "auto",
-                      }}
-                    />
+          <section className="step">
+            <h1 className="step__title">Empezar en AirB2B es muy sencillo</h1>
+            <p className="step__subtitle">
+              Tres pasos para tener tu primer anuncio en línea.
+            </p>
+            <Row className="g-4 mt-2">
+              {[
+                {
+                  title: "1. Describe tu espacio",
+                  text: "Añade datos básicos, como dónde está y cuántos huéspedes admite.",
+                  img: "/foto3.png",
+                },
+                {
+                  title: "2. Añade los detalles",
+                  text: "Sube fotos, escribe un título y una descripción.",
+                  img: "/foto2.png",
+                },
+                {
+                  title: "3. Publícalo",
+                  text: "Elige un precio inicial, revisa y publica.",
+                  img: "/foto1.png",
+                },
+              ].map((step) => (
+                <Col xs={12} md={4} key={step.title}>
+                  <div className="step-card">
+                    <img src={step.img} alt="" />
+                    <h3>{step.title}</h3>
+                    <p>{step.text}</p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <style>
-              {`
-        @media (max-width: 768px) {
-          #firstPage {
-            padding: 10px 20px !important;
-          }
-
-          #firstPage h1 {
-            font-size: 1.5rem !important;
-            margin-bottom: 5px !important;
-          }
-
-          #firstPage div[style*="justify-content: space-between"] {
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-          }
-
-          #firstPage img {
-            width: 150px !important;
-            margin-top: 10px !important;
-          }
-        }
-      `}
-            </style>
+                </Col>
+              ))}
+            </Row>
           </section>
         )}
 
         {currentStep === 2 && (
-          <section id="secondPage" style={{ padding: "20px 40px" }}>
-            <h1>¿Cuál de estas opciones describe mejor tu alojamiento?</h1>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "20px",
-                marginTop: "20px",
-              }}
-            >
-              {Object.entries(typesHouses).map(([name, imgSrc]) => (
-                <Button
-                  key={name}
-                  variant={typeHouse === name ? "primary" : "outline-secondary"}
-                  onClick={() => setTypeHouse(name)}
-                  style={{
-                    width: "200px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "10px",
-                  }}
+          <section className="step">
+            <h1 className="step__title">¿Qué tipo de alojamiento es?</h1>
+            <p className="step__subtitle">Elige el que mejor lo describa.</p>
+            <div className="type-grid mt-3">
+              {Object.entries(TYPES).map(([name, imgSrc]) => (
+                <button
                   type="button"
+                  key={name}
+                  onClick={() => setTypeHouse(name)}
+                  className={`type-card ${typeHouse === name ? "is-active" : ""}`}
+                  aria-pressed={typeHouse === name}
                 >
-                  <img
-                    src={imgSrc}
-                    alt={name}
-                    width="80"
-                    height="80"
-                    style={{ objectFit: "contain" }}
-                  />
-                  {name}
-                </Button>
+                  <img src={imgSrc} alt="" />
+                  <span>{name}</span>
+                </button>
               ))}
             </div>
           </section>
         )}
+
         {currentStep === 3 && (
-          <section id="thirdPage" style={{ padding: "20px 40px" }}>
-            <h1>¿Dónde se encuentra tu alojamiento?</h1>
+          <section className="step">
+            <h1 className="step__title">¿Dónde se encuentra?</h1>
+            <p className="step__subtitle">
+              Solo compartimos la ubicación exacta con los huéspedes confirmados.
+            </p>
 
-            <Form.Group className="mb-3" controlId="Adress">
-              <Form.Label>Introduce tu dirección exacta</Form.Label>
-              <Form.Control
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Dirección"
-              />
-            </Form.Group>
+            <Row className="g-3 mt-3">
+              <Col md={6}>
+                <Form.Group controlId="address">
+                  <Form.Label>Dirección</Form.Label>
+                  <Form.Control
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Calle y número"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group controlId="city">
+                  <Form.Label>Ciudad</Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      value={city}
+                      onChange={(e) =>
+                        setCity(
+                          e.target.value.charAt(0).toUpperCase() +
+                            e.target.value.slice(1)
+                        )
+                      }
+                      placeholder="Ej: Madrid"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleCitySearch();
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline-dark"
+                      onClick={handleCitySearch}
+                      type="button"
+                    >
+                      Buscar
+                    </Button>
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+            </Row>
 
-            <Form.Group className="mb-3" controlId="City">
-              <Form.Label>Ciudad</Form.Label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <Form.Control
-                  value={city}
-                  onChange={(e) =>
-                    setCity(
-                      e.target.value.charAt(0).toUpperCase() +
-                        e.target.value.slice(1)
-                    )
-                  }
-                  placeholder="Ciudad"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleCitySearch();
-                    }
-                  }}
+            <div className="new-house-map mt-3">
+              <MapContainer
+                center={mapPosition}
+                zoom={6}
+                scrollWheelZoom={false}
+                ref={mapRef}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <TileLayer
+                  attribution="&copy; OpenStreetMap contributors"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <Button variant="secondary" onClick={handleCitySearch}>
-                  Buscar ciudad
-                </Button>
-              </div>
-            </Form.Group>
-
-            <MapContainer
-              center={mapPosition}
-              zoom={6}
-              scrollWheelZoom={false}
-              style={{ height: "300px", width: "100%" }}
-              ref={mapRef}
-            >
-              <TileLayer
-                attribution="&copy; OpenStreetMap contributors"
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <ClickMarker setClickedPosition={setClickedPosition} />
-              {clickedPosition && (
-                <Marker position={clickedPosition} icon={customMarker} />
-              )}
-              {cityCoords && (
-                <RecenterMap lat={cityCoords[0]} lng={cityCoords[1]} />
-              )}
-            </MapContainer>
-
-            <small className="text-muted">
+                <ClickMarker setClickedPosition={setClickedPosition} />
+                {clickedPosition && (
+                  <Marker position={clickedPosition} icon={customMarker} />
+                )}
+                {cityCoords && (
+                  <RecenterMap lat={cityCoords[0]} lng={cityCoords[1]} />
+                )}
+              </MapContainer>
+            </div>
+            <small className="text-muted d-block mt-2">
               Haz click en el mapa para fijar la localización exacta.
             </small>
           </section>
         )}
+
         {currentStep === 4 && (
-          <section id="fourthPage" style={{ padding: "20px 40px" }}>
-            <h4>Comencemos por lo básico</h4>
-            <p>¿Cuantas personas pueden quedarse?</p>
-            <div
-              style={{
-                display: "flex",
-                gap: "1.5rem",
-                alignItems: "center",
-                flexDirection: "column",
-              }}
-            >
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                <label>Personas</label>
-                <InputGroup style={{ width: "150px" }}>
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleDecrease1}
-                    type="button"
-                  >
-                    –
-                  </Button>
-                  <FormControl
-                    type="number"
-                    value={value1}
-                    onChange={(e) => setValue1(Number(e.target.value))}
-                    style={{ textAlign: "center" }}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleIncrease1}
-                    type="button"
-                  >
-                    +
-                  </Button>
-                </InputGroup>
-              </div>
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                <label>Habitaciones</label>
-                <InputGroup style={{ width: "150px" }}>
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleDecrease2}
-                    type="button"
-                  >
-                    –
-                  </Button>
-                  <FormControl
-                    type="number"
-                    value={value2}
-                    onChange={(e) => setValue2(Number(e.target.value))}
-                    style={{ textAlign: "center" }}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleIncrease2}
-                    type="button"
-                  >
-                    +
-                  </Button>
-                </InputGroup>
-              </div>
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                <label>Camas</label>
-                <InputGroup style={{ width: "150px" }}>
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleDecrease3}
-                    type="button"
-                  >
-                    –
-                  </Button>
-                  <FormControl
-                    type="number"
-                    value={value3}
-                    onChange={(e) => setValue3(Number(e.target.value))}
-                    style={{ textAlign: "center" }}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleIncrease3}
-                    type="button"
-                  >
-                    +
-                  </Button>
-                </InputGroup>
-              </div>
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                <label>Baños</label>
-                <InputGroup style={{ width: "150px" }}>
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleDecrease4}
-                    type="button"
-                  >
-                    –
-                  </Button>
-                  <FormControl
-                    type="number"
-                    value={value4}
-                    onChange={(e) => setValue4(Number(e.target.value))}
-                    style={{ textAlign: "center" }}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    onClick={handleIncrease4}
-                    type="button"
-                  >
-                    +
-                  </Button>
-                </InputGroup>
-              </div>
+          <section className="step">
+            <h1 className="step__title">Comencemos por lo básico</h1>
+            <p className="step__subtitle">¿Cuántas personas pueden quedarse?</p>
+            <div className="steppers mt-3">
+              <Stepper label="Huéspedes" value={people} onChange={setPeople} min={1} />
+              <Stepper label="Habitaciones" value={bedrooms} onChange={setBedrooms} />
+              <Stepper label="Camas" value={beds} onChange={setBeds} min={1} />
+              <Stepper label="Baños" value={bathrooms} onChange={setBathrooms} />
             </div>
           </section>
         )}
+
         {currentStep === 5 && (
-          <section id="fivePage" style={{ padding: "20px 40px" }}>
-            <h1>Cuéntale a los viajeros todo lo que ofrece tu espacio</h1>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "12px",
-                marginTop: "12px",
-              }}
-            >
-              {Object.entries(services).map(([name, imgSrc]) => {
+          <section className="step">
+            <h1 className="step__title">¿Qué ofrece tu espacio?</h1>
+            <p className="step__subtitle">Marca todo lo que esté disponible.</p>
+            <div className="service-grid mt-3">
+              {Object.entries(SERVICES).map(([name, imgSrc]) => {
                 const active = selectedServices.has(name);
                 return (
-                  <Button
-                    key={name}
-                    variant={active ? "primary" : "outline-secondary"}
-                    onClick={() => toggleService(name)}
+                  <button
                     type="button"
-                    style={{
-                      width: "180px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
+                    key={name}
+                    onClick={() => toggleService(name)}
+                    className={`service-card ${active ? "is-active" : ""}`}
+                    aria-pressed={active}
                   >
-                    <img
-                      src={imgSrc}
-                      alt={name}
-                      width="70"
-                      height="70"
-                      style={{ objectFit: "contain" }}
-                    />
-                    {name}
-                  </Button>
+                    <img src={imgSrc} alt="" />
+                    <span>{name}</span>
+                  </button>
                 );
               })}
             </div>
           </section>
         )}
+
         {currentStep === 6 && (
-          <section id="sixthPage" style={{ padding: "20px 40px" }}>
-            <h1>Añade algunas imágenes de tu alojamiento</h1>
-            <div style={{ marginBottom: "8px" }}>
-              <label>Imágenes: </label>
-              <input
-                type="file"
-                name="images"
-                multiple
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
+          <section className="step">
+            <h1 className="step__title">Añade imágenes</h1>
+            <p className="step__subtitle">Recomendamos al menos 5 fotos.</p>
+
+            <div className="upload-area">
+              <label htmlFor="imgs" className="upload-area__label">
+                <strong>Arrastra o pulsa para subir</strong>
+                <span>JPG, PNG o WebP — máx. 5 MB cada una</span>
+                <input
+                  id="imgs"
+                  type="file"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  hidden
+                />
+              </label>
+              {isUploading && (
+                <div className="upload-area__status">
+                  <Spinner animation="border" size="sm" /> Subiendo…
+                </div>
+              )}
             </div>
-            {isUploading && (
-              <div>
-                <Spinner animation="border" size="sm" /> Subiendo...
+
+            {imageUrls.length > 0 && (
+              <div className="upload-grid mt-3">
+                {imageUrls.map((url, i) => (
+                  <div key={`${url}-${i}`} className="upload-grid__item">
+                    <img src={url} alt={`Foto ${i + 1}`} />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="upload-grid__remove"
+                      aria-label="Quitar imagen"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-                marginTop: "10px",
-              }}
-            >
-              {imageUrls.map((url, i) => (
-                <div key={`${url}-${i}`} style={{ position: "relative" }}>
-                  <img
-                    src={url}
-                    alt={`img-${i}`}
-                    width={160}
-                    style={{ borderRadius: "12px", objectFit: "cover" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(i)}
-                    style={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
-                      background: "rgba(0,0,0,0.6)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "50%",
-                      width: 26,
-                      height: 26,
-                      cursor: "pointer",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
           </section>
         )}
+
         {currentStep === 7 && (
-          <section id="seventhPage" style={{ padding: "20px 40px" }}>
-            <h1>Ponle un título a tu alojamiento</h1>
-            <p>
-              Los títulos cortos dan mejor resultado. No te preocupes, puedes
-              cambiarlo más adelante.
+          <section className="step">
+            <h1 className="step__title">Ponle un título</h1>
+            <p className="step__subtitle">
+              Los títulos cortos funcionan mejor. Lo puedes cambiar después.
             </p>
             <Form.Control
               as="textarea"
               rows={2}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={120}
+              placeholder="Ej: Apartamento luminoso con vistas al mar"
+              className="big-input mt-3"
             />
+            <small className="text-muted">{title.length}/120</small>
           </section>
         )}
+
         {currentStep === 8 && (
-          <section id="eigthPage" style={{ padding: "20px 40px" }}>
-            <h1>Escribe tu descripción</h1>
-            <p>Explica qué hace que tu alojamiento sea especial.</p>
+          <section className="step">
+            <h1 className="step__title">Escribe tu descripción</h1>
+            <p className="step__subtitle">
+              Explica qué hace especial a tu espacio.
+            </p>
             <Form.Control
               as="textarea"
-              rows={4}
+              rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe el alojamiento, el barrio, qué pueden esperar…"
+              className="big-input mt-3"
             />
           </section>
         )}
-        {currentStep === 9 && (
-          <section id="ninePage" style={{ padding: "20px 40px" }}>
-            <h1>Configura un precio base para tu alojamiento</h1>
-            <p>Define el precio por día en euros.</p>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "1rem",
-              }}
-            >
-              <InputGroup
-                style={{
-                  width: "12ch",
-                  justifyContent: "center",
-                  border: "2px solid black",
-                  borderRadius: "20px",
-                }}
-              >
-                <InputGroup.Text
-                  style={{
-                    fontSize: "2.2rem",
-                    padding: "0.25rem 0.5rem",
-                    background: "transparent",
-                    border: "none",
-                  }}
-                >
-                  €
-                </InputGroup.Text>
-                <FormControl
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  className="border-0 text-center fw-bold"
-                  style={{
-                    fontSize: "2.6rem",
-                    background: "transparent",
-                    padding: "0.25rem 0.5rem",
-                  }}
-                  min={0}
-                />
-              </InputGroup>
+        {currentStep === 9 && (
+          <section className="step">
+            <h1 className="step__title">¿A qué precio?</h1>
+            <p className="step__subtitle">
+              Indica el precio por noche en euros. Lo podrás ajustar siempre.
+            </p>
+            <div className="price-input">
+              <span className="price-input__currency">€</span>
+              <input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                min={0}
+                aria-label="Precio por noche"
+              />
             </div>
           </section>
         )}
-        <div style={{ padding: "20px 40px" }}>
-          {submitError && <Alert variant="danger">{submitError}</Alert>}
-          {submitSuccess && <Alert variant="success">{submitSuccess}</Alert>}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "20px 40px",
-            position: "sticky",
-            bottom: 0,
-            background: "white",
-          }}
-        >
-          <Button variant="secondary" type="button" onClick={goBack}>
-            {currentStep > 1 ? "Atrás" : "Volver"}
+
+        {submitError && (
+          <Alert variant="danger" className="mt-4">
+            {submitError}
+          </Alert>
+        )}
+        {submitSuccess && (
+          <Alert variant="success" className="mt-4">
+            {submitSuccess}
+          </Alert>
+        )}
+      </Container>
+
+      <div className="new-house-page__nav">
+        <Container className="d-flex justify-content-between align-items-center">
+          <Button variant="link" className="text-dark" onClick={goBack} type="button">
+            {currentStep > 1 ? "← Atrás" : "Cancelar"}
           </Button>
           <div>
             {currentStep < totalSteps && (
               <Button
-                variant="outline-secondary"
                 onClick={goNext}
                 type="button"
-                style={{ marginRight: 8 }}
+                className="airb2b-btn-primary"
               >
                 Siguiente
               </Button>
             )}
             {currentStep === totalSteps && (
-              <Button variant="primary" type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="airb2b-btn-primary"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+              >
                 {isSubmitting ? (
                   <>
-                    <Spinner animation="border" size="sm" /> Creando...
+                    <Spinner animation="border" size="sm" /> Publicando…
                   </>
                 ) : (
                   "Publicar alojamiento"
@@ -791,8 +588,8 @@ function NewHousePage() {
               </Button>
             )}
           </div>
-        </div>
-      </form>
+        </Container>
+      </div>
     </div>
   );
 }

@@ -2,9 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import queryString from "query-string";
 import service from "../services/service.config";
-import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
+import { Container, Row, Col, Spinner, Alert } from "react-bootstrap";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import HousingCard from "../components/HousingCard";
 
 function PaginaResultados() {
   const [isLoading, setIsLoading] = useState(true);
@@ -13,16 +14,21 @@ function PaginaResultados() {
   const [cityCoords, setCityCoords] = useState([40.4169, -3.7034]);
 
   const location = useLocation();
+  const { city } = useMemo(
+    () => queryString.parse(location.search),
+    [location.search]
+  );
 
-  // recalcula la query cada vez que cambia location.search
-  const { city } = useMemo(() => queryString.parse(location.search), [location.search]);
-
-  const customMarker = L.icon({
-    iconUrl: "/marker.png",
-    iconSize: [60, 95],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
-  });
+  const customMarker = useMemo(
+    () =>
+      L.icon({
+        iconUrl: "/marker.png",
+        iconSize: [48, 76],
+        iconAnchor: [24, 76],
+        popupAnchor: [0, -76],
+      }),
+    []
+  );
 
   useEffect(() => {
     if (!city) {
@@ -31,46 +37,43 @@ function PaginaResultados() {
       return;
     }
 
-    let mounted = true; // para evitar setState si el componente se desmonta
-
-    const fetchResults = async () => {
-      setIsLoading(true);
-      setError(null);
+    let cancelled = false;
+    (async () => {
       try {
+        setIsLoading(true);
+        setError(null);
         const res = await service.get(
           `/accommodation/with-reviews?city=${encodeURIComponent(city)}`
         );
+        if (cancelled) return;
+        setResults(Array.isArray(res.data) ? res.data : []);
 
-        if (!mounted) return;
-        setResults(res.data || []);
-        console.log(res.data);
-
-        const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            city + ", Spain"
-          )}`
-        );
-        const geoData = await geoRes.json();
-        if (!mounted) return;
-        if (geoData.length > 0) {
-          const { lat, lon } = geoData[0];
-          setCityCoords([parseFloat(lat), parseFloat(lon)]);
+        try {
+          const geoRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+              `${city}, Spain`
+            )}`
+          );
+          const geoData = await geoRes.json();
+          if (!cancelled && Array.isArray(geoData) && geoData.length > 0) {
+            const { lat, lon } = geoData[0];
+            setCityCoords([parseFloat(lat), parseFloat(lon)]);
+          }
+        } catch {
+          // Si falla Nominatim no es bloqueante
         }
       } catch (err) {
-        if (!mounted) return;
-        console.error("Error buscando alojamientos:", err);
-        setError("Error buscando alojamientos");
-        setResults([]);
+        if (!cancelled) {
+          console.error("Error buscando alojamientos:", err);
+          setError("Error buscando alojamientos");
+          setResults([]);
+        }
       } finally {
-        if (!mounted) return;
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
-    };
-
-    fetchResults();
-
+    })();
     return () => {
-      mounted = false;
+      cancelled = true;
     };
   }, [city]);
 
@@ -82,13 +85,18 @@ function PaginaResultados() {
     );
 
   return (
-    <Container className="py-4">
-      <h3>
-        Resultados para: <strong>{city}</strong>
-      </h3>
-      {error && <div className="alert alert-danger">{error}</div>}
+    <Container className="py-4 search-results">
+      <h2 className="mb-1">
+        Resultados para <strong>{city || "—"}</strong>
+      </h2>
+      <p className="text-muted">
+        {results.length} alojamiento{results.length !== 1 ? "s" : ""} encontrado
+        {results.length !== 1 ? "s" : ""}
+      </p>
 
-      <div style={{ height: 400, marginBottom: 20 }}>
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      <div className="search-results__map">
         <MapContainer
           center={cityCoords}
           zoom={12}
@@ -112,7 +120,10 @@ function PaginaResultados() {
                   <Popup>
                     <strong>{acc.title}</strong>
                     <br />
-                    {acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"}
+                    {acc.city}
+                    {acc.avgStars
+                      ? ` · ★ ${Number(acc.avgStars).toFixed(1)}`
+                      : ""}
                     <br />
                     <Link to={`/housingdetails/${acc._id}`}>Ver detalles</Link>
                   </Popup>
@@ -123,29 +134,23 @@ function PaginaResultados() {
       </div>
 
       {results.length === 0 ? (
-        <p className="text-muted">
-          No se han encontrado alojamientos en {city}.
+        <p className="text-muted mt-4">
+          No se han encontrado alojamientos en {city || "esa ciudad"}.
         </p>
       ) : (
-        <Row className="g-3 mt-3">
+        <Row className="g-4 mt-1">
           {results.map((acc) => (
             <Col key={acc._id} xs={12} sm={6} md={4} lg={3}>
-              <Card
-                as={Link}
-                to={`/housingdetails/${acc._id}`}
-                style={{ textDecoration: "none", borderRadius: "20px", overflow: "hidden", position: "relative" }}
-              >
-                <Card.Img
-                  src={acc.photos?.[0] || "/placeholder.png"}
-                  alt="Alojamiento"
-                  style={{ height: "200px", objectFit: "cover" }}
-                />
-              </Card>
-              <div>
-                <h7>{acc.title}</h7>
-                <p>{(acc.cost ?? 0) * 2}€ por dos noches</p>
-                <p>{acc.city} · ☆ {acc.avgStars?.toFixed(1) ?? "—"} </p>
-              </div>
+              <HousingCard
+                acc={acc}
+                extra={
+                  acc.avgStars ? (
+                    <span className="housing-card__rating">
+                      ★ {Number(acc.avgStars).toFixed(1)}
+                    </span>
+                  ) : null
+                }
+              />
             </Col>
           ))}
         </Row>
