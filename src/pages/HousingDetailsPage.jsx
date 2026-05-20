@@ -1,10 +1,32 @@
-import { useEffect, useState, useContext } from "react";
-import { Button, Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
+import { useEffect, useState, useContext, useMemo } from "react";
+import {
+  Button,
+  Container,
+  Row,
+  Col,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
 import { useParams } from "react-router-dom";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import L from "leaflet";
 import service from "../services/service.config";
 import { AuthContext } from "../context/auth.context";
 import BookingCard from "../components/BookingCard";
 import ReviewForm from "../components/ReviewForm";
+
+// Marcador "Airbnb" — círculo negro con icono casa
+const houseMarker = L.divIcon({
+  className: "air-house-marker",
+  html: `
+    <div class="air-house-marker__dot">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden>
+        <path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3l9-8z" />
+      </svg>
+    </div>`,
+  iconSize: [44, 44],
+  iconAnchor: [22, 22],
+});
 
 const IMG_SERVICE = {
   "Wi-Fi": "/wifi.png",
@@ -299,44 +321,20 @@ function HousingDetailsPage() {
             Aún no hay reseñas. ¡Sé el primero en opinar!
           </p>
         ) : (
-          <Row className="g-3">
+          <div className="reviews-list">
             {reviews.map((r) => (
-              <Col xs={12} md={6} key={r._id}>
-                <Card className="border-0 shadow-sm h-100">
-                  <Card.Body>
-                    <div className="d-flex align-items-center mb-2 gap-2">
-                      {r.creator?.photo ? (
-                        <img
-                          src={r.creator.photo}
-                          alt={r.creator.username || "Usuario"}
-                          className="review-avatar"
-                        />
-                      ) : (
-                        <div className="review-avatar review-avatar--initial">
-                          {(r.creator?.username || "U").charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <div className="fw-semibold">
-                          {r.creator?.username || "Usuario"}
-                        </div>
-                        <div className="small text-muted">
-                          {r.createdAt
-                            ? new Date(r.createdAt).toLocaleDateString("es-ES")
-                            : ""}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mb-1">
-                      <span className="housing-details__rating">★ {r.stars}</span>
-                    </div>
-                    <h6 className="mb-1">{r.title}</h6>
-                    <p className="mb-0 text-muted">{r.text}</p>
-                  </Card.Body>
-                </Card>
-              </Col>
+              <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
+                <strong>
+                  {r.creator && typeof r.creator === "object"
+                    ? r.creator.username
+                    : r.creator || "Usuario"}
+                </strong>{" "}
+                - {r.stars} ⭐
+                <h6 className="mt-2 mb-1">{r.title}</h6>
+                <p className="mb-0">{r.text}</p>
+              </div>
             ))}
-          </Row>
+          </div>
         )}
       </div>
     </Container>

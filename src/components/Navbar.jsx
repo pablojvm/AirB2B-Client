@@ -1,13 +1,5 @@
-import { useState, useContext, useEffect } from "react";
-import {
-  Navbar,
-  Container,
-  Image,
-  InputGroup,
-  Button,
-  Form,
-  Dropdown,
-} from "react-bootstrap";
+import { useState, useContext, useEffect, useRef } from "react";
+import { Navbar, Container, Image, Button, Dropdown } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/auth.context";
 import ModalLogin from "./ModalLogin";
@@ -25,7 +17,9 @@ function NavBar() {
   const [showHostModal, setShowHostModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [ownCount, setOwnCount] = useState(0);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +30,8 @@ function NavBar() {
       }
       try {
         const res = await service.get("/accommodation/own");
-        if (!cancelled) setOwnCount(Array.isArray(res.data) ? res.data.length : 0);
+        if (!cancelled)
+          setOwnCount(Array.isArray(res.data) ? res.data.length : 0);
       } catch {
         if (!cancelled) setOwnCount(0);
       }
@@ -63,9 +58,14 @@ function NavBar() {
 
   const goSearch = (city) => {
     const cityTrimmed = (city || query || "").trim();
-    if (!cityTrimmed) return;
+    if (!cityTrimmed) {
+      // Si no hay query, focus al input
+      inputRef.current?.focus();
+      return;
+    }
     const cityFinal = cityTrimmed[0].toUpperCase() + cityTrimmed.slice(1);
     navigate(`/search?city=${encodeURIComponent(cityFinal)}`);
+    setSearchOpen(false);
   };
 
   const onKeyDown = (e) => {
@@ -73,6 +73,11 @@ function NavBar() {
       e.preventDefault();
       goSearch();
     }
+  };
+
+  const focusInput = () => {
+    setSearchOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const hostLabel =
@@ -133,34 +138,72 @@ function NavBar() {
     </Dropdown>
   );
 
-  const renderSearch = () => (
-    <div className="airb2b-search">
-      <InputGroup>
-        <Form.Control
-          placeholder="¿A dónde vamos?"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-          aria-label="Buscar ciudad"
-        />
-        {query && (
-          <Button
-            variant="link"
-            className="airb2b-search-clear"
-            onClick={() => setQuery("")}
-            title="Limpiar"
-            aria-label="Limpiar búsqueda"
-          >
-            ×
-          </Button>
+  // ----- Buscador estilo Airbnb (píldora con 3 secciones) -----
+  const renderSearchPill = () => (
+    <div
+      className={`airb2b-pill ${searchOpen ? "is-open" : ""}`}
+      role="search"
+    >
+      <button
+        type="button"
+        className="airb2b-pill__section airb2b-pill__section--input"
+        onClick={focusInput}
+      >
+        {searchOpen ? (
+          <>
+            <span className="airb2b-pill__label">¿Dónde?</span>
+            <input
+              ref={inputRef}
+              type="text"
+              className="airb2b-pill__input"
+              placeholder="Busca destinos"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onKeyDown}
+              onBlur={() => {
+                if (!query) setSearchOpen(false);
+              }}
+              aria-label="Buscar ciudad"
+            />
+          </>
+        ) : (
+          <span className="airb2b-pill__placeholder">
+            {query || "Cualquier lugar"}
+          </span>
         )}
-        <Button
-          className="airb2b-search-btn"
-          onClick={() => goSearch()}
-          aria-label="Buscar"
-          title="Buscar"
+      </button>
+
+      <span className="airb2b-pill__divider" />
+
+      <button
+        type="button"
+        className="airb2b-pill__section"
+        onClick={focusInput}
+        title="Las fechas se eligen al reservar"
+      >
+        <span className="airb2b-pill__placeholder">Cualquier fecha</span>
+      </button>
+
+      <span className="airb2b-pill__divider" />
+
+      <button
+        type="button"
+        className="airb2b-pill__section airb2b-pill__section--last"
+        onClick={focusInput}
+        title="Los viajeros se eligen al reservar"
+      >
+        <span className="airb2b-pill__placeholder airb2b-pill__placeholder--muted">
+          Añade viajeros
+        </span>
+        <span
+          className="airb2b-pill__btn"
+          role="presentation"
+          onClick={(e) => {
+            e.stopPropagation();
+            goSearch();
+          }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle cx="11" cy="11" r="7" stroke="#fff" strokeWidth="2.5" />
             <path
               d="m21 21-4.3-4.3"
@@ -169,9 +212,8 @@ function NavBar() {
               strokeLinecap="round"
             />
           </svg>
-          <span className="d-none d-md-inline ms-2">Buscar</span>
-        </Button>
-      </InputGroup>
+        </span>
+      </button>
     </div>
   );
 
@@ -184,9 +226,11 @@ function NavBar() {
             <Link to="/" className="airb2b-logo" aria-label="AirB2B inicio">
               <Image src="/logoair.png" height="38" alt="AirB2B" />
             </Link>
+
             <div className="flex-grow-1 d-flex justify-content-center">
-              {renderSearch()}
+              {renderSearchPill()}
             </div>
+
             <div className="d-flex align-items-center gap-2">
               <Button
                 variant="link"
@@ -213,7 +257,12 @@ function NavBar() {
                   aria-label="Hazte anfitrión"
                   title="Hazte anfitrión"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3l9-8z" />
                   </svg>
                 </button>
@@ -227,7 +276,7 @@ function NavBar() {
                 {userMenu}
               </div>
             </div>
-            <div className="w-100">{renderSearch()}</div>
+            <div className="w-100">{renderSearchPill()}</div>
           </div>
         </Container>
       </Navbar>

@@ -83,45 +83,120 @@
   align-items: center;
   text-decoration: none;
 }
-.airb2b-search {
-  width: 100%;
-  max-width: 560px;
-}
-.airb2b-search .input-group {
+/* Buscador estilo Airbnb (píldora con 3 secciones) */
+.airb2b-pill {
+  display: inline-flex;
+  align-items: stretch;
   background: #fff;
   border-radius: var(--air-radius-pill);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--air-border-strong);
-  overflow: hidden;
+  border: 1px solid var(--air-border-strong);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.18s ease;
+  height: 48px;
+  overflow: hidden;
+  max-width: 100%;
 }
-.airb2b-search .input-group:focus-within {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1), 0 0 0 1px var(--air-primary);
+.airb2b-pill:hover {
+  box-shadow: var(--air-shadow-md);
 }
-.airb2b-search .form-control {
-  border: none !important;
-  background: transparent !important;
-  padding: 0.65rem 1rem;
-  font-size: 0.95rem;
-  box-shadow: none !important;
+.airb2b-pill.is-open {
+  box-shadow: var(--air-shadow-md);
 }
-.airb2b-search-clear {
-  color: var(--air-text-muted) !important;
-  text-decoration: none !important;
-  font-size: 1rem;
-}
-.airb2b-search-btn {
-  background: var(--air-primary) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: var(--air-radius-pill) !important;
-  margin: 4px;
-  padding: 0.4rem 0.9rem !important;
-  font-weight: 600;
+
+.airb2b-pill__section {
+  background: transparent;
+  border: none;
+  padding: 0 18px;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  color: var(--air-text);
+  font-weight: 500;
+  font-size: 0.92rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease;
 }
-.airb2b-search-btn:hover {
-  background: var(--air-primary-hover) !important;
+.airb2b-pill__section:hover {
+  background: var(--air-bg-soft);
+}
+.airb2b-pill__section--input {
+  font-weight: 600;
+}
+.airb2b-pill__section--last {
+  padding-right: 6px;
+  gap: 12px;
+}
+.airb2b-pill__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--air-text-muted);
+  letter-spacing: 0.04em;
+  margin-right: 6px;
+  display: none; /* solo visible cuando is-open en la versión completa */
+}
+.airb2b-pill.is-open .airb2b-pill__section--input .airb2b-pill__label {
+  display: inline;
+}
+.airb2b-pill__placeholder {
+  color: var(--air-text);
+}
+.airb2b-pill__placeholder--muted {
+  color: var(--air-text-muted);
+  font-weight: 400;
+}
+.airb2b-pill__input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--air-text);
+  min-width: 140px;
+  max-width: 200px;
+}
+.airb2b-pill__input::placeholder {
+  color: var(--air-text-muted);
+  font-weight: 400;
+}
+.airb2b-pill__divider {
+  width: 1px;
+  background: var(--air-border);
+  margin: 10px 0;
+}
+.airb2b-pill:hover .airb2b-pill__divider,
+.airb2b-pill__section:hover + .airb2b-pill__divider {
+  background: transparent;
+}
+.airb2b-pill__btn {
+  background: var(--air-primary);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, width 0.18s ease;
+}
+.airb2b-pill__btn:hover {
+  background: var(--air-primary-hover);
+}
+
+/* En móvil reducimos el buscador: solo input + botón */
+@media (max-width: 991.98px) {
+  .airb2b-pill {
+    width: 100%;
+    height: 44px;
+  }
+  .airb2b-pill__section {
+    padding: 0 12px;
+    font-size: 0.88rem;
+  }
+  .airb2b-pill__section--last {
+    margin-left: auto;
+  }
 }
 .airb2b-host-link {
   color: var(--air-text) !important;
