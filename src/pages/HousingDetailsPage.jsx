@@ -282,18 +282,109 @@ function HousingDetailsPage() {
 
       <hr className="my-5" />
 
-      <div className="housing-details__reviews">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="h4 mb-0">
-            {hasReviews ? (
-              <>
-                <span className="housing-details__rating">★ {stars.toFixed(1)}</span>{" "}
-                · {reviews.length} reseña{reviews.length !== 1 ? "s" : ""}
-              </>
-            ) : (
-              "Reseñas"
-            )}
-          </h2>
+      {/* ¿Dónde me voy a quedar? */}
+      <LocationBlock acc={acc} />
+
+      <hr className="my-5" />
+
+      {/* Sección de valoraciones estilo Airbnb */}
+      <ReviewsBlock
+        reviews={reviews}
+        stars={stars}
+        hasReviews={hasReviews}
+        showForm={showForm}
+        setShowForm={setShowForm}
+        isLoggedIn={isLoggedIn}
+        openLoginModal={openLoginModal}
+        accommodationId={params.accommodationId}
+        onNewReview={handleNewReview}
+      />
+    </Container>
+  );
+}
+
+/* ============================================================
+   Bloque "¿Dónde me voy a quedar?" con mapa
+============================================================ */
+function LocationBlock({ acc }) {
+  const coords = acc?.location?.coordinates;
+  // GeoJSON [lng, lat] → Leaflet [lat, lng]
+  const center =
+    Array.isArray(coords) && coords.length === 2
+      ? [coords[1], coords[0]]
+      : null;
+
+  const cityLine = [acc?.city, "Comunidad de Madrid", "España"]
+    .filter(Boolean)
+    .join(", ");
+
+  if (!center) {
+    return (
+      <section className="housing-location">
+        <h2 className="h4 fw-bold mb-2">¿Dónde me voy a quedar?</h2>
+        <p className="text-muted">
+          {acc?.city ? `${acc.city}, España` : "Ubicación no disponible"}
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="housing-location">
+      <h2 className="h4 fw-bold mb-2">¿Dónde me voy a quedar?</h2>
+      <p className="text-muted mb-3">{cityLine}</p>
+      <div className="housing-location__map">
+        <MapContainer
+          center={center}
+          zoom={13}
+          scrollWheelZoom={false}
+          style={{ height: "100%", width: "100%" }}
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={center} icon={houseMarker} />
+        </MapContainer>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   Bloque de reseñas estilo Airbnb
+============================================================ */
+function ReviewsBlock({
+  reviews,
+  stars,
+  hasReviews,
+  showForm,
+  setShowForm,
+  isLoggedIn,
+  openLoginModal,
+  accommodationId,
+  onNewReview,
+}) {
+  // Distribución de estrellas (5,4,3,2,1)
+  const distribution = useMemo(() => {
+    const buckets = [0, 0, 0, 0, 0]; // index 0 = 5★
+    reviews.forEach((r) => {
+      const s = Math.round(r.stars || 0);
+      if (s >= 1 && s <= 5) buckets[5 - s] += 1;
+    });
+    return buckets;
+  }, [reviews]);
+
+  const maxBucket = Math.max(...distribution, 1);
+  const total = reviews.length;
+  const avg = Number(stars) || 0;
+
+  // Cuando no hay reseñas, formato compacto
+  if (!hasReviews) {
+    return (
+      <section className="housing-reviews">
+        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h2 className="h4 fw-bold mb-0">Reseñas</h2>
           {isLoggedIn ? (
             <Button
               variant="outline-dark"
@@ -308,37 +399,215 @@ function HousingDetailsPage() {
             </Button>
           )}
         </div>
-
         {showForm && (
           <ReviewForm
-            accommodationId={params.accommodationId}
-            onNewReview={handleNewReview}
+            accommodationId={accommodationId}
+            onNewReview={onNewReview}
           />
         )}
+        <p className="text-muted fst-italic">
+          Aún no hay reseñas. ¡Sé el primero en opinar!
+        </p>
+      </section>
+    );
+  }
 
-        {!hasReviews ? (
-          <p className="text-muted fst-italic">
-            Aún no hay reseñas. ¡Sé el primero en opinar!
-          </p>
-        ) : (
-          <div className="reviews-list">
-            {reviews.map((r) => (
-              <div key={r._id} className="card mb-2 p-3 shadow-sm border-0">
-                <strong>
-                  {r.creator && typeof r.creator === "object"
-                    ? r.creator.username
-                    : r.creator || "Usuario"}
-                </strong>{" "}
-                - {r.stars} ⭐
-                <h6 className="mt-2 mb-1">{r.title}</h6>
-                <p className="mb-0">{r.text}</p>
+  // Mismas categorías que Airbnb. Como solo tenemos una nota global,
+  // las mostramos todas con la nota media (sin inventar datos).
+  const categories = [
+    { name: "Limpieza", icon: CategoryIcons.cleaning },
+    { name: "Veracidad", icon: CategoryIcons.accuracy },
+    { name: "Llegada", icon: CategoryIcons.checkin },
+    { name: "Comunicación", icon: CategoryIcons.comm },
+    { name: "Ubicación", icon: CategoryIcons.location },
+    { name: "Calidad", icon: CategoryIcons.value },
+  ];
+
+  return (
+    <section className="housing-reviews">
+      {/* Header */}
+      <div className="housing-reviews__header">
+        <h2 className="housing-reviews__score">
+          <span className="housing-reviews__star">★</span>{" "}
+          {avg.toFixed(2).replace(".", ",")}
+          <span className="housing-reviews__sep"> · </span>
+          {total} evaluaci{total === 1 ? "ón" : "ones"}
+        </h2>
+        <p className="text-muted small">¿Cómo funcionan las evaluaciones?</p>
+      </div>
+
+      {/* Distribución + categorías */}
+      <div className="housing-reviews__stats">
+        <div className="rating-distribution">
+          <div className="small fw-semibold mb-2">Valoración general</div>
+          {[5, 4, 3, 2, 1].map((s, i) => (
+            <div className="rating-row" key={s}>
+              <span className="rating-row__num">{s}</span>
+              <div className="rating-row__bar">
+                <div
+                  className="rating-row__fill"
+                  style={{ width: `${(distribution[i] / maxBucket) * 100}%` }}
+                />
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+        {categories.map((c) => (
+          <div className="rating-category" key={c.name}>
+            <div className="rating-category__name">{c.name}</div>
+            <div className="rating-category__score">
+              {avg.toFixed(1).replace(".", ",")}
+            </div>
+            <div className="rating-category__icon" aria-hidden>
+              {c.icon}
+            </div>
           </div>
+        ))}
+      </div>
+
+      {/* CTA reseña + formulario */}
+      <div className="d-flex justify-content-end mb-3">
+        {isLoggedIn ? (
+          <Button
+            variant="outline-dark"
+            size="sm"
+            onClick={() => setShowForm((v) => !v)}
+          >
+            {showForm ? "Cerrar formulario" : "Escribir reseña"}
+          </Button>
+        ) : (
+          <Button variant="outline-dark" size="sm" onClick={openLoginModal}>
+            Inicia sesión para opinar
+          </Button>
         )}
       </div>
-    </Container>
+      {showForm && (
+        <ReviewForm
+          accommodationId={accommodationId}
+          onNewReview={onNewReview}
+        />
+      )}
+
+      {/* Grid 2 columnas de reseñas */}
+      <Row className="g-4 mt-2">
+        {reviews.map((r) => (
+          <Col xs={12} md={6} key={r._id}>
+            <ReviewItem review={r} />
+          </Col>
+        ))}
+      </Row>
+    </section>
   );
 }
+
+/* Tarjeta individual de reseña — estilo Airbnb */
+function ReviewItem({ review }) {
+  const [expanded, setExpanded] = useState(false);
+  const TRUNCATE = 220;
+  const text = review.text || "";
+  const isLong = text.length > TRUNCATE;
+  const shown = expanded || !isLong ? text : text.slice(0, TRUNCATE) + "…";
+
+  const name =
+    review.creator && typeof review.creator === "object"
+      ? review.creator.username
+      : review.creator || "Usuario";
+  const photo =
+    review.creator && typeof review.creator === "object"
+      ? review.creator.photo
+      : null;
+  const initial = String(name || "U").charAt(0).toUpperCase();
+  const date = review.createdAt
+    ? new Date(review.createdAt).toLocaleDateString("es-ES", {
+        month: "long",
+        year: "numeric",
+      })
+    : "";
+  const fullStars = Math.round(review.stars || 0);
+
+  return (
+    <article className="review-item">
+      <header className="review-item__head">
+        {photo ? (
+          <img src={photo} alt={name} className="review-item__avatar" />
+        ) : (
+          <div className="review-item__avatar review-item__avatar--initial">
+            {initial}
+          </div>
+        )}
+        <div className="review-item__who">
+          <div className="review-item__name">{name}</div>
+          <div className="review-item__sub">Miembro de AirB2B</div>
+        </div>
+      </header>
+      <div className="review-item__meta">
+        <span className="review-item__stars" aria-label={`${fullStars} de 5`}>
+          {"★".repeat(fullStars)}
+          <span className="review-item__stars-empty">
+            {"★".repeat(5 - fullStars)}
+          </span>
+        </span>
+        {date && <span className="review-item__sep">·</span>}
+        {date && <span>{date}</span>}
+      </div>
+      {review.title && <h6 className="review-item__title">{review.title}</h6>}
+      <p className="review-item__text">{shown}</p>
+      {isLong && (
+        <button
+          type="button"
+          className="review-item__more"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Mostrar menos" : "Mostrar más"}
+        </button>
+      )}
+    </article>
+  );
+}
+
+/* Iconos line-style de las categorías de Airbnb */
+const CategoryIcons = {
+  cleaning: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 4h4l1 3h-4z" />
+      <path d="M15 7v4a3 3 0 0 1-3 3H8a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2" />
+      <circle cx="8" cy="9" r="1" />
+      <circle cx="6" cy="13" r="1" />
+      <circle cx="10" cy="13" r="1" />
+    </svg>
+  ),
+  accuracy: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 3 3 5-6" />
+    </svg>
+  ),
+  checkin: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="15" r="4" />
+      <path d="m11 12 8-8" />
+      <path d="m15 4 4 4" />
+      <path d="m18 7 2-2" />
+    </svg>
+  ),
+  comm: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a8 8 0 1 1-3-6.2L21 4l-1 4a8 8 0 0 1 1 4z" />
+      <path d="M8 11h8M8 14h5" />
+    </svg>
+  ),
+  location: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3 7 6-3 6 3 6-3v13l-6 3-6-3-6 3z" />
+      <path d="M9 4v13M15 7v13" />
+    </svg>
+  ),
+  value: (
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 12 12 4H4v8l8 8 8-8z" />
+      <circle cx="8" cy="8" r="1.5" />
+    </svg>
+  ),
+};
 
 export default HousingDetailsPage;

@@ -741,6 +741,211 @@
 }
 
 /* ============================================================
+   "¿Dónde me voy a quedar?" — mapa de ubicación
+============================================================ */
+.housing-location__map {
+  height: 480px;
+  border-radius: var(--air-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--air-border);
+}
+.air-house-marker__dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--air-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  border: 3px solid #fff;
+}
+
+/* ============================================================
+   Bloque de valoraciones estilo Airbnb
+============================================================ */
+.housing-reviews__header {
+  margin-bottom: 24px;
+}
+.housing-reviews__score {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+.housing-reviews__star {
+  color: var(--air-text);
+}
+.housing-reviews__sep {
+  opacity: 0.55;
+  font-weight: 500;
+}
+.housing-reviews__stats {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(6, 1fr);
+  gap: 4px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--air-border);
+  margin-bottom: 28px;
+}
+.housing-reviews__stats > * {
+  padding: 0 18px;
+  border-left: 1px solid var(--air-border);
+}
+.housing-reviews__stats > *:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.rating-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--air-text-muted);
+}
+.rating-row__num {
+  width: 12px;
+  text-align: right;
+}
+.rating-row__bar {
+  flex: 1;
+  height: 4px;
+  background: var(--air-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rating-row__fill {
+  height: 100%;
+  background: var(--air-text);
+  border-radius: 999px;
+}
+
+.rating-category {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 110px;
+}
+.rating-category__name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--air-text);
+}
+.rating-category__score {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.rating-category__icon {
+  color: var(--air-text);
+  opacity: 0.85;
+}
+
+/* Tarjetas de reseñas */
+.review-item {
+  background: #fff;
+}
+.review-item__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.review-item__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--air-bg-soft);
+}
+.review-item__avatar--initial {
+  background: var(--air-text);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+.review-item__name {
+  font-weight: 600;
+}
+.review-item__sub {
+  font-size: 0.85rem;
+  color: var(--air-text-muted);
+}
+.review-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: var(--air-text);
+}
+.review-item__stars {
+  letter-spacing: 0.5px;
+  color: var(--air-text);
+}
+.review-item__stars-empty {
+  color: var(--air-border-strong);
+  margin-left: 2px;
+}
+.review-item__sep {
+  opacity: 0.55;
+}
+.review-item__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 4px 0 6px;
+}
+.review-item__text {
+  color: var(--air-text);
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+.review-item__more {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--air-text);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 991.98px) {
+  .housing-reviews__stats {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .housing-reviews__stats > * {
+    border-left: none;
+    padding: 0;
+  }
+  .housing-reviews__stats > *:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--air-border);
+  }
+  .housing-location__map {
+    height: 360px;
+  }
+}
+@media (max-width: 575.98px) {
+  .housing-reviews__score {
+    font-size: 1.5rem;
+  }
+  .housing-reviews__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============================================================
    Búsqueda (resultados)
 ============================================================ */
 .search-results__map {
