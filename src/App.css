@@ -23,10 +23,10 @@
   background: var(--air-bg);
 }
 .app-loading-gif {
-  width: 380px;
-  height: 380px;
-  max-width: 60vw;
-  max-height: 60vh;
+  width: 720px;
+  height: 720px;
+  max-width: 85vw;
+  max-height: 85vh;
   object-fit: contain;
 }
 
@@ -71,6 +71,24 @@
 .airb2b-navbar-inner {
   display: flex;
   align-items: center;
+}
+/* Grid de 3 columnas iguales → la barra queda CENTRADA respecto al navbar
+   sin importar el ancho del logo o del bloque de acciones. */
+.airb2b-navbar-row {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.airb2b-navbar-center {
+  display: flex;
+  justify-content: center;
+}
+.airb2b-navbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 .airb2b-logo {
   display: inline-flex;

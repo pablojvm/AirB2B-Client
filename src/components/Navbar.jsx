@@ -222,16 +222,16 @@ function NavBar() {
       <Navbar className="airb2b-navbar" id="navbar" sticky="top">
         <Container fluid className="airb2b-navbar-inner">
           {/* Desktop */}
-          <div className="d-none d-lg-flex align-items-center w-100 justify-content-between gap-3">
+          <div className="d-none d-lg-flex align-items-center w-100 airb2b-navbar-row">
             <Link to="/" className="airb2b-logo" aria-label="AirB2B inicio">
-              <Image src="/logoair.png" height="38" alt="AirB2B" />
+              <Image src="/logoair.png" height="56" alt="AirB2B" />
             </Link>
 
-            <div className="flex-grow-1 d-flex justify-content-center">
+            <div className="airb2b-navbar-center">
               {renderSearchPill()}
             </div>
 
-            <div className="d-flex align-items-center gap-2">
+            <div className="airb2b-navbar-right">
               <Button
                 variant="link"
                 className="airb2b-host-link"
@@ -247,7 +247,7 @@ function NavBar() {
           <div className="d-flex d-lg-none flex-column w-100">
             <div className="d-flex w-100 justify-content-between align-items-center mb-2">
               <Link to="/" className="airb2b-logo" aria-label="AirB2B inicio">
-                <Image src="/logoair.png" height="30" alt="AirB2B" />
+                <Image src="/logoair.png" height="42" alt="AirB2B" />
               </Link>
               <div className="d-flex align-items-center gap-2">
                 <button
