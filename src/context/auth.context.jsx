@@ -18,17 +18,28 @@ function AuthWrapper({ children }) {
 
   const authenticateUser = useCallback(async () => {
     const authToken = localStorage.getItem("authToken");
+
+    // Mínimo 3s para que se vea siempre el splash de Airbnb al cargar la app.
+    // Hacemos la petición y el delay en paralelo: el tiempo real de carga
+    // queda enmascarado por el delay si la petición es rápida.
+    const minSplash = new Promise((resolve) => setTimeout(resolve, 3000));
+
     if (!authToken) {
+      await minSplash;
       setIsLoggedIn(false);
       setLoggedUserId(null);
       setIsValidatingToken(false);
       return;
     }
     try {
-      const { data } = await service.get("/auth/verify");
+      const [{ data }] = await Promise.all([
+        service.get("/auth/verify"),
+        minSplash,
+      ]);
       setIsLoggedIn(true);
       setLoggedUserId(data.payload._id);
     } catch {
+      await minSplash;
       localStorage.removeItem("authToken");
       setIsLoggedIn(false);
       setLoggedUserId(null);
