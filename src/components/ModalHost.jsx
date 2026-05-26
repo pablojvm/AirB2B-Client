@@ -19,7 +19,7 @@ function ModalHost({ show, handleClose }) {
         <img
           src="/casa.png"
           alt="Crear anuncio"
-          style={{ width: 200, maxWidth: "60%", marginBottom: 16 }}
+          className="airb2b-modal__hero-img"
         />
         <p className="text-muted">
           Publica tu espacio en AirB2B. Te guiamos paso a paso para que tardes

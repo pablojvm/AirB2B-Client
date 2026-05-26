@@ -139,7 +139,11 @@ function AuthWrapper({ children }) {
   if (isValidatingToken) {
     return (
       <div className="app-loading-screen">
-        <div className="app-loading-spinner" aria-label="Cargando" />
+        <img
+          src="/airbnb.gif"
+          alt="Cargando"
+          className="app-loading-gif"
+        />
       </div>
     );
   }
